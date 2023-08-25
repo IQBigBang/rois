@@ -46,8 +46,12 @@ namespace RoisLang.mid_ir
             foreach (var val in instr.AllArgs())
             {
                 if (val.IsReg) {
+                    // verify the register is from this block
                     if (val.GetBasicBlock() != blockId)
                         throw new Exception("A foreign block value used in basic block");
+                    // verify the register is well-defined
+                    if (val.GetRegNum() > NextInstrRegIdx)
+                        throw new Exception("Undefined register used");
                 }
             }
 

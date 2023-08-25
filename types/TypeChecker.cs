@@ -19,9 +19,9 @@ namespace RoisLang.types
         public void TypeckFunc(Func f)
         {
             Locals.Clear();
-            foreach (var argName in f.Arguments)
+            foreach (var (argName, argTy) in f.Arguments)
             {
-                Locals.Add(argName, TypeRef.INT); // TODO
+                Locals.Add(argName, argTy); // TODO
             }
             foreach (var stmt in f.Body)
             {

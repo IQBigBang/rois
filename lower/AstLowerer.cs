@@ -24,19 +24,20 @@ namespace RoisLang.lower
 
         public void LowerFunc(Func f)
         {
-            var block = new MidBlock(0, Enumerable.Repeat(TypeRef.INT, f.Arguments.Length).ToList());
+            var block = new MidBlock(0, f.Arguments.Select(x => x.Item2).ToList());
             Builder.SwitchBlock(block);
             Locals = new Dictionary<string, MidValue>();
             // add arguments
             for (int i = 0; i < f.Arguments.Length; i++)
             {
-                Locals.Add(f.Arguments[i], block.Argument(i));
+                Locals.Add(f.Arguments[i].Item1, block.Argument(i));
             }
             // compile the body
             foreach (var stmt in f.Body)
             {
                 LowerStmt(stmt);
             }
+            Builder.BuildRet();
             block.Dump();
         }
 

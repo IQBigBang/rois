@@ -18,7 +18,7 @@ foo = 855
 let c = foo";
 
 string test3 =
-@"def main(a, b):
+@"def main(a: int, b: int):
     let c = (a + b) + (b + a)
 ";
 

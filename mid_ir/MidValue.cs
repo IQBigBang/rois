@@ -30,10 +30,12 @@ namespace RoisLang.mid_ir
             this.ty = ty;
         }
 
+        //public static MidValue Null = new MidValue(0, 0, TypeRef.UNKNOWN);
         public static MidValue Null() => new(0, 0, TypeRef.UNKNOWN);
         public static MidValue ConstInt(int val) => new(1, (uint)val, TypeRef.INT);
         public static MidValue Reg(uint reg, uint blockId, TypeRef ty) => new(2, reg, ty, (ushort)blockId);
 
+        public bool IsNull => tag == 0;
         public bool IsConstInt => tag == 1;
         public bool IsReg => tag == 2;
         
@@ -41,6 +43,12 @@ namespace RoisLang.mid_ir
         {
             if (IsReg) return extra;
             return -1;
+        }
+
+        public int GetRegNum()
+        {
+            if (IsReg) return (int)value;
+            return int.MaxValue;
         }
 
         public override bool Equals(object? obj)

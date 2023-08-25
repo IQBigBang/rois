@@ -1,4 +1,5 @@
-﻿using System;
+﻿using RoisLang.types;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -9,14 +10,16 @@ namespace RoisLang.ast
     public class Func
     {
         public string Name;
-        public string[] Arguments;
+        public (string, TypeRef)[] Arguments;
+        public TypeRef Ret;
         public Stmt[] Body;
 
-        public Func(string name, string[] arguments, Stmt[] body)
+        public Func(string name, (string, TypeRef)[] arguments, Stmt[] body, TypeRef ret)
         {
             Name = name;
             Arguments = arguments;
             Body = body;
+            Ret = ret;
         }
     }
 }

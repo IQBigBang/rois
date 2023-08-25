@@ -1,4 +1,5 @@
 ﻿using RoisLang.ast;
+using RoisLang.types;
 using Superpower;
 using System;
 using System.Collections.Generic;
@@ -10,6 +11,9 @@ namespace RoisLang.parser
 {
     internal class Parser
     {
+        private static readonly TokenListParser<Token, TypeRef> TypeName
+            = Superpower.Parsers.Token.EqualToValue(Token.Sym, "int").Value(TypeRef.INT);
+
         private static readonly TokenListParser<Token, Expr> Atom =
             Superpower.Parsers.Token.EqualTo(Token.Int).Select(s => (Expr)new IntExpr(int.Parse(s.ToStringValue())))
             .Or(Superpower.Parsers.Token.EqualTo(Token.Sym).Select(s => (Expr)new VarExpr(s.ToStringValue())))
@@ -47,8 +51,12 @@ namespace RoisLang.parser
             ParseStmt.Then(stmt => Superpower.Parsers.Token.EqualTo(Token.Nl).Value(stmt)).Many();
         //ParseStmt.ManyDelimitedBy(Superpower.Parsers.Token.EqualTo(Token.Nl)/*, Superpower.Parsers.Token.EqualTo(Token.Nl).OptionalOrDefault()*/);
 
-        private static readonly TokenListParser<Token, string[]> FuncDefArgs =
-            Superpower.Parsers.Token.EqualTo(Token.Sym).Select(tok => tok.ToStringValue()).ManyDelimitedBy(Superpower.Parsers.Token.EqualTo(Token.Comma));
+        private static readonly TokenListParser<Token, (string, TypeRef)[]> FuncDefArgs =
+            Superpower.Parsers.Token.EqualTo(Token.Sym)
+            .Then(argName => Superpower.Parsers.Token.EqualTo(Token.Colon)
+                  .IgnoreThen(TypeName)
+                  .Select(type => (argName.ToStringValue(), type)))
+            .ManyDelimitedBy(Superpower.Parsers.Token.EqualTo(Token.Comma));
 
         private static readonly TokenListParser<Token, Func> ParseFuncDef =
             Superpower.Parsers.Token.EqualTo(Token.KwDef)
@@ -64,7 +72,7 @@ namespace RoisLang.parser
                     .IgnoreThen(ParseStmts)
                     .Then(body =>
                         Superpower.Parsers.Token.EqualTo(Token.Dedent)
-                        .Value(new Func(funcName.ToStringValue(), funcArgs, body))
+                        .Value(new Func(funcName.ToStringValue(), funcArgs, body, TypeRef.VOID /*TODO*/))
                     )
                 )
             );
