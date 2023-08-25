@@ -10,15 +10,19 @@ namespace RoisLang.parser
 {
     internal class Parser
     {
-        private static Superpower.TokenListParser<RoisLang.parser.Token, Expr> Atom =>
+        private static readonly TokenListParser<Token, Expr> Atom =
             Superpower.Parsers.Token.EqualTo(Token.Int).Select(s => (Expr)new IntExpr(int.Parse(s.ToStringValue())))
-            .Or(Superpower.Parsers.Token.EqualTo(Token.Sym).Select(s => (Expr)new VarExpr(s.ToStringValue())));
+            .Or(Superpower.Parsers.Token.EqualTo(Token.Sym).Select(s => (Expr)new VarExpr(s.ToStringValue())))
+            // `Lazy` must be used to add a level of indirection (because the `Expr` field is not initialized at the moment)
+            .Or(Lazy(GetExpr).Between(Superpower.Parsers.Token.EqualTo(Token.LParen), Superpower.Parsers.Token.EqualTo(Token.RParen)));
 
-        private static Superpower.TokenListParser<RoisLang.parser.Token, Expr> Expr =>
+        private static readonly TokenListParser<Token, Expr> Expr =
             Atom.Chain(Superpower.Parsers.Token.EqualTo(Token.Plus), Atom,
                 (_op, lhs, rhs) => new BinOpExpr(lhs, rhs, BinOpExpr.Ops.Add));
 
-        private static Superpower.TokenListParser<RoisLang.parser.Token, Stmt> LetStmt =>
+        private static TokenListParser<Token, Expr> GetExpr() { return Expr; }
+
+        private static readonly TokenListParser<Token, Stmt> LetStmt =
             Superpower.Parsers.Token.EqualTo(Token.KwLet)
             .IgnoreThen(Superpower.Parsers.Token.EqualTo(Token.Sym))
             .Select(s => s.ToStringValue().Trim())
@@ -26,27 +30,27 @@ namespace RoisLang.parser
                             .IgnoreThen(Expr)
                             .Select(varValue => (Stmt)new LetAssignStmt(varName, varValue)));
 
-        private static Superpower.TokenListParser<RoisLang.parser.Token, Stmt> AssignStmt =>
+        private static readonly TokenListParser<Token, Stmt> AssignStmt =
             Expr.Then(leftExpr =>
                 Superpower.Parsers.Token.EqualTo(Token.Assign)
                 .IgnoreThen(Expr)
                 .Select(rightExpr => (Stmt)new AssignStmt(leftExpr, rightExpr))
             );
 
-        private static Superpower.TokenListParser<RoisLang.parser.Token, Stmt> DiscardStmt =>
+        private static readonly TokenListParser<Token, Stmt> DiscardStmt =
             Expr.Select(leftExpr => (Stmt)new DiscardStmt(leftExpr));
 
-        private static Superpower.TokenListParser<RoisLang.parser.Token, Stmt> ParseStmt =>
+        private static readonly TokenListParser<Token, Stmt> ParseStmt =
             LetStmt.Or(AssignStmt).Or(DiscardStmt)/*.Then(stmt => Superpower.Parsers.Token.EqualTo(Token.Nl).Value(stmt))*/;
 
-        private static Superpower.TokenListParser<RoisLang.parser.Token, Stmt[]> ParseStmts =>
+        private static TokenListParser<Token, Stmt[]> ParseStmts =
             ParseStmt.Then(stmt => Superpower.Parsers.Token.EqualTo(Token.Nl).Value(stmt)).Many();
-            //ParseStmt.ManyDelimitedBy(Superpower.Parsers.Token.EqualTo(Token.Nl)/*, Superpower.Parsers.Token.EqualTo(Token.Nl).OptionalOrDefault()*/);
+        //ParseStmt.ManyDelimitedBy(Superpower.Parsers.Token.EqualTo(Token.Nl)/*, Superpower.Parsers.Token.EqualTo(Token.Nl).OptionalOrDefault()*/);
 
-        private static Superpower.TokenListParser<RoisLang.parser.Token, string[]> FuncDefArgs =>
+        private static readonly TokenListParser<Token, string[]> FuncDefArgs =
             Superpower.Parsers.Token.EqualTo(Token.Sym).Select(tok => tok.ToStringValue()).ManyDelimitedBy(Superpower.Parsers.Token.EqualTo(Token.Comma));
 
-        private static Superpower.TokenListParser<RoisLang.parser.Token, Func> ParseFuncDef =>
+        private static readonly TokenListParser<Token, Func> ParseFuncDef =
             Superpower.Parsers.Token.EqualTo(Token.KwDef)
             .IgnoreThen(Superpower.Parsers.Token.EqualTo(Token.Sym))
             .Then(funcName =>
@@ -73,5 +77,11 @@ namespace RoisLang.parser
                 Console.WriteLine(result.FormatErrorMessageFragment());
             return result.Value;
         }
+
+        public static TokenListParser<TKind, T> Lazy<TKind, T>(Func<TokenListParser<TKind, T>> parser)
+        {
+            return (tokens) => parser()(tokens);
+        }
+        
     }
 }

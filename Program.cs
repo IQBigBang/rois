@@ -19,7 +19,7 @@ let c = foo";
 
 string test3 =
 @"def main(a, b):
-    let c = a + b + 42
+    let c = (a + b) + (b + a)
 ";
 
 var tokens = Lexer.TokenizeString(test3);
