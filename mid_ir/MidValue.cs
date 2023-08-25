@@ -1,4 +1,5 @@
-﻿using System;
+﻿using RoisLang.types;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -15,21 +16,23 @@ namespace RoisLang.mid_ir
     /// </summary>
     public struct MidValue
     {
+        private TypeRef ty;
         // 0 = undefined, 1 = const int, 2 = local virtual register
         private ushort tag;
         private ushort extra;
         private uint value;
 
-        private MidValue(ushort tag, uint value, ushort extra = 0)
+        private MidValue(ushort tag, uint value, TypeRef ty, ushort extra = 0)
         {
             this.tag = tag;
             this.extra = extra;
             this.value = value;
+            this.ty = ty;
         }
 
-        public static MidValue Null() => new(0, 0);
-        public static MidValue ConstInt(int val) => new(1, (uint)val);
-        public static MidValue Reg(uint reg, uint blockId) => new(2, reg, (ushort)blockId);
+        public static MidValue Null() => new(0, 0, TypeRef.UNKNOWN);
+        public static MidValue ConstInt(int val) => new(1, (uint)val, TypeRef.INT);
+        public static MidValue Reg(uint reg, uint blockId, TypeRef ty) => new(2, reg, ty, (ushort)blockId);
 
         public bool IsConstInt => tag == 1;
         public bool IsReg => tag == 2;
@@ -42,6 +45,7 @@ namespace RoisLang.mid_ir
 
         public override bool Equals(object? obj)
         {
+            // TODO: should we check types for equality (?)
             return (obj is MidValue other && other.tag == tag && other.value == value && other.extra == extra);
         }
         public override int GetHashCode() => HashCode.Combine(tag, value, extra);
@@ -55,8 +59,13 @@ namespace RoisLang.mid_ir
         {
             if (tag == 0) return "undefined";
             if (tag == 1) return "const " + value;
-            if (tag == 2) return "%" + value;
+            if (tag == 2) return ty + " %" + value;
             return "!INVALID_VALUE";
+        }
+
+        public void AssertType(TypeRef typ)
+        {
+            if (!ty.Equal(typ)) throw new Exception("");
         }
     }
 }

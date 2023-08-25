@@ -1,4 +1,5 @@
-﻿using System;
+﻿using RoisLang.types;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -25,6 +26,8 @@ namespace RoisLang.mid_ir.builder
         /// </summary>
         public MidValue BuildIAdd(MidValue lhs, MidValue rhs)
         {
+            lhs.AssertType(TypeRef.INT);
+            rhs.AssertType(TypeRef.INT);
             var instr = new mid_ir.MidIAddInstr { Out = MidValue.Null(), Lhs = lhs, Rhs = rhs };
             return currentBlock.AddInstr(instr);
         }

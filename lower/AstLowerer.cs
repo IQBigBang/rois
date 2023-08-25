@@ -1,6 +1,7 @@
 ﻿using RoisLang.ast;
 using RoisLang.mid_ir;
 using RoisLang.mid_ir.builder;
+using RoisLang.types;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,14 +17,14 @@ namespace RoisLang.lower
 
         public AstLowerer()
         {
-            var block = new MidBlock(0, 1);
+            var block = new MidBlock(0);
             Builder = new MidBuilder(block);
             Locals = new Dictionary<string, MidValue>();
         }
 
         public void LowerFunc(Func f)
         {
-            var block = new MidBlock(0, f.Arguments.Length);
+            var block = new MidBlock(0, Enumerable.Repeat(TypeRef.INT, f.Arguments.Length).ToList());
             Builder.SwitchBlock(block);
             Locals = new Dictionary<string, MidValue>();
             // add arguments

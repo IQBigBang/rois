@@ -10,5 +10,8 @@ namespace RoisLang.types
     {
         public override bool IsVoid => false;
         public override bool IsInt => true;
+        public override bool IsFunc => false;
+
+        public override string ToString() => "int";
     }
 }

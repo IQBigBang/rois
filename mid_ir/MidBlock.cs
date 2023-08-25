@@ -1,4 +1,5 @@
-﻿using System;
+﻿using RoisLang.types;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -13,30 +14,30 @@ namespace RoisLang.mid_ir
     public class MidBlock
     {
         private readonly uint blockId;
-        public uint argumentCount;
+        public List<TypeRef> arguments;
         public List<MidInstr?> Instrs;
 
-        private uint NextInstrRegIdx => argumentCount + (uint)Instrs.Count;
+        private uint NextInstrRegIdx => (uint)(arguments.Count + Instrs.Count);
 
-        public MidBlock(uint blockId, int argumentCount)
+        public MidBlock(uint blockId, List<TypeRef>? arguments = null)
         {
-            this.argumentCount = (uint)argumentCount;
+            this.arguments = arguments ?? new List<TypeRef>();
             this.blockId = blockId;
             Instrs = new List<MidInstr?>();
         }
         
         public IEnumerable<MidValue> Arguments()
         {
-            for (uint i = 0; i < argumentCount; i++)
+            for (int i = 0; i < arguments.Count; i++)
             {
-                yield return MidValue.Reg(i, blockId);
+                yield return MidValue.Reg((uint)i, blockId, arguments[i]);
             }
         }
 
         public MidValue Argument(int i)
         {
-            if (i >= argumentCount) return MidValue.Null();
-            return MidValue.Reg((uint)i, blockId);
+            if (i >= arguments.Count) return MidValue.Null();
+            return MidValue.Reg((uint)i, blockId, arguments[i]);
         }
 
         public MidValue AddInstr(MidInstr instr)
@@ -50,10 +51,18 @@ namespace RoisLang.mid_ir
                 }
             }
 
-            var newReg = MidValue.Reg(NextInstrRegIdx, blockId);
-            instr.SetOut(newReg);
-            Instrs.Add(instr);
-            return newReg;
+            if (instr.HasOut())
+            {
+                var newReg = MidValue.Reg(NextInstrRegIdx, blockId, instr.OutType());
+                instr.SetOut(newReg);
+                Instrs.Add(instr);
+                return newReg;
+            }
+            else
+            {
+                Instrs.Add(instr);
+                return MidValue.Null();
+            }
         }
 
         public void Dump()

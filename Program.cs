@@ -1,6 +1,7 @@
 ﻿// See https://aka.ms/new-console-template for more information
 using RoisLang.lower;
 using RoisLang.parser;
+using RoisLang.types;
 
 string testWS =
 @"
@@ -18,13 +19,12 @@ let c = foo";
 
 string test3 =
 @"def main(a, b):
-    let c = a + b
-    c = b + c
+    let c = a + b + 42
 ";
 
 var tokens = Lexer.TokenizeString(test3);
 var parseResult = Parser.LexAndParse(test3);
-// TODO: type-check step
+new TypeChecker().TypeckFunc(parseResult);
 var lowerer = new AstLowerer();
 lowerer.LowerFunc(parseResult);
 /*foreach (var stmt in parseResult)

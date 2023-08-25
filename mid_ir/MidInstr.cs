@@ -1,4 +1,5 @@
-﻿using System;
+﻿using RoisLang.types;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,8 +9,15 @@ namespace RoisLang.mid_ir
 {
     public abstract class MidInstr
     {
+        /// <summary>
+        /// Does the instruction have a meaningful output? 
+        /// (For example, calls to void functions or `ret` do not)
+        /// </summary>
+        /// <returns></returns>
+        public abstract bool HasOut();
         // Required by the builder
         public abstract void SetOut(MidValue val);
+        public abstract TypeRef OutType();
         public abstract MidValue[] AllArgs();
         public abstract void Map(Func<MidValue, MidValue> map);
 
@@ -21,36 +29,15 @@ namespace RoisLang.mid_ir
         public void Replace(MidValue from, MidValue to) => Map((x) => x == from ? to : x);
     }
 
-    /*/// <summary>
-    /// `reg = Set val`
-    /// Simply sets a register to be equal to a certain value
-    /// </summary>
-    public class MidSetInstr : MidInstr
-    {
-        public MidValue Out;
-        public MidValue Value;
-
-        public override void SetOut(MidValue val) => Out = val;
-        public override MidValue[] AllArgs() => new MidValue[] { Value };
-        public override void Map(Func<MidValue, MidValue> map)
-        {
-            Out = map(Out);
-            Value = map(Value);
-        }
-
-        public override void Dump()
-        {
-            Console.WriteLine($"{Out} = Set {Value}");
-        }
-    }*/
-
     public class MidIAddInstr : MidInstr
     {
         public MidValue Out;
         public MidValue Lhs;
         public MidValue Rhs;
 
+        public override bool HasOut() => true;
         public override void SetOut(MidValue val) => Out = val;
+        public override TypeRef OutType() => TypeRef.INT;
         public override MidValue[] AllArgs() => new MidValue[] { Out, Lhs, Rhs };
         public override void Map(Func<MidValue, MidValue> map)
         {

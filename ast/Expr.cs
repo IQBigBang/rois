@@ -1,4 +1,5 @@
-﻿using System;
+﻿using RoisLang.types;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,6 +9,7 @@ namespace RoisLang.ast
 {
     public abstract record Expr()
     {
+        public TypeRef Ty = TypeRef.UNKNOWN;
         public abstract bool IsValidLhs();
     };
 
