@@ -27,7 +27,8 @@ namespace RoisLang.ast
     {
         public enum Ops
         {
-            Add
+            Add,
+            Sub
         }
         public override bool IsValidLhs() => false;
     }

@@ -59,6 +59,9 @@ namespace RoisLang.lower
                         if (binOpExpr.Op == BinOpExpr.Ops.Add)
                         {
                             return Builder.BuildIAdd(lhs, rhs);
+                        } else if (binOpExpr.Op == BinOpExpr.Ops.Sub)
+                        {
+                            return Builder.BuildISub(lhs, rhs);
                         }
                         else throw new NotImplementedException();
                     }

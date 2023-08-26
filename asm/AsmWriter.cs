@@ -66,7 +66,34 @@ namespace RoisLang.asm
                         WriteLn("add {b32}, {b32}", iAddInstr.Out, iAddInstr.Rhs);
                     }
                     break;
-                case MidIRet iRetInstr:
+                case MidISubInstr iSubInstr:
+                    {
+                        // IAdd is side-effect free, if its result is unused, it can be skipped
+                        if (regs[iSubInstr.Out] == GpReg.RNull) break;
+                        // ISub generally compiles to:
+                        // mov out, lhs
+                        // sub out, rhs
+                        // the only thing we have to check for is if out==rhs, in which case a miscompilation would occur
+                        if (iSubInstr.Rhs.IsReg && regs[iSubInstr.Rhs] == regs[iSubInstr.Out])
+                        {
+                            // out==rhs => sub out, lhs
+                            // correct the value by doing `neg out`
+                            WriteLn("sub {b32}, {b32}", iSubInstr.Out, iSubInstr.Lhs);
+                            WriteLn("neg {b32}", iSubInstr.Out);
+                            break;
+                        }
+                        // optimization, if out==lhs, the first mov is useless
+                        if (iSubInstr.Lhs.IsReg && regs[iSubInstr.Lhs] == regs[iSubInstr.Out]) { }
+                        else
+                        {
+                            // mov out, lhs
+                            WriteLn("mov {b32}, {b32}", iSubInstr.Out, iSubInstr.Lhs);
+                        }
+                        // sub out, rhs
+                        WriteLn("sub {b32}, {b32}", iSubInstr.Out, iSubInstr.Rhs);
+                    }
+                    break;
+                case MidIRetInstr iRetInstr:
                     {
                         if (!iRetInstr.Value.IsNull)
                             WriteLn("mov rax, {b64}", iRetInstr.Value);
@@ -92,7 +119,7 @@ namespace RoisLang.asm
                 if (format[i] == '{') 
                 {
                     int endOfFormatSpecifier = format.IndexOf('}', i);
-                    string[] formatSpecifiers = format.Substring(i+1, endOfFormatSpecifier-(i+1)).Split(',');
+                    string[] formatSpecifiers = format[(i + 1)..endOfFormatSpecifier].Split(',');
                     if (args[argCounter] is MidValue mv)
                         WriteValue(mv, formatSpecifiers);
                     else if (args[argCounter] is GpReg gpReg)

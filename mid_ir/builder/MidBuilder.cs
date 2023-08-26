@@ -34,10 +34,18 @@ namespace RoisLang.mid_ir.builder
             return currentBlock.AddInstr(instr);
         }
 
+        public MidValue BuildISub(MidValue lhs, MidValue rhs)
+        {
+            lhs.AssertType(TypeRef.INT);
+            rhs.AssertType(TypeRef.INT);
+            var instr = new mid_ir.MidISubInstr { Out = MidValue.Null(), Lhs = lhs, Rhs = rhs };
+            return currentBlock.AddInstr(instr);
+        }
+
         public MidValue BuildRet() => BuildRet(MidValue.Null());
         public MidValue BuildRet(MidValue val)
         {
-            var instr = new mid_ir.MidIRet { Value = val };
+            var instr = new mid_ir.MidIRetInstr { Value = val };
             return currentBlock.AddInstr(instr);
         }
     }

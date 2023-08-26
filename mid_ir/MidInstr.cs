@@ -53,7 +53,30 @@ namespace RoisLang.mid_ir
         }
     }
 
-    public class MidIRet : MidInstr
+    public class MidISubInstr : MidInstr
+    {
+        public MidValue Out;
+        public MidValue Lhs;
+        public MidValue Rhs;
+
+        public override bool HasOut() => true;
+        public override void SetOut(MidValue val) => Out = val;
+        public override MidValue GetOut() => Out;
+        public override TypeRef OutType() => TypeRef.INT;
+        public override MidValue[] AllArgs() => new MidValue[] { Out, Lhs, Rhs };
+        public override void Map(Func<MidValue, MidValue> map)
+        {
+            Out = map(Out);
+            Lhs = map(Lhs);
+            Rhs = map(Rhs);
+        }
+        public override void Dump()
+        {
+            Console.WriteLine($"{Out} = ISub {Lhs}, {Rhs}");
+        }
+    }
+
+    public class MidIRetInstr : MidInstr
     {
         // This may be null, which means a "void value" is returned
         public MidValue Value;

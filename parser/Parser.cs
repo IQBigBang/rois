@@ -21,8 +21,9 @@ namespace RoisLang.parser
             .Or(Lazy(GetExpr).Between(Superpower.Parsers.Token.EqualTo(Token.LParen), Superpower.Parsers.Token.EqualTo(Token.RParen)));
 
         private static readonly TokenListParser<Token, Expr> Expr =
-            Atom.Chain(Superpower.Parsers.Token.EqualTo(Token.Plus), Atom,
-                (_op, lhs, rhs) => new BinOpExpr(lhs, rhs, BinOpExpr.Ops.Add));
+            Atom.Chain(Superpower.Parsers.Token.EqualTo(Token.Plus).Or(Superpower.Parsers.Token.EqualTo(Token.Minus)), Atom,
+                (op, lhs, rhs) => new BinOpExpr(lhs, rhs,
+                    op.ToStringValue() == "+" ? BinOpExpr.Ops.Add : op.ToStringValue() == "-" ? BinOpExpr.Ops.Sub : throw new Exception()));
 
         private static TokenListParser<Token, Expr> GetExpr() { return Expr; }
 
