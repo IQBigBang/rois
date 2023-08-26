@@ -21,6 +21,8 @@ namespace RoisLang.mid_ir.builder
             currentBlock = block;
         }
 
+        public MidBlock CurrentBlock => currentBlock;
+
         /// <summary>
         /// reg = IAdd lhs, rhs
         /// </summary>

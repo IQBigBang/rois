@@ -1,4 +1,5 @@
 ﻿// See https://aka.ms/new-console-template for more information
+using RoisLang.asm;
 using RoisLang.lower;
 using RoisLang.parser;
 using RoisLang.types;
@@ -19,7 +20,8 @@ let c = foo";
 
 string test3 =
 @"def main(a: int, b: int):
-    let c = (a + b) + (b + a)
+    let c = 1 + 2 + 3
+    let d = (a + b) + (b + a)
 ";
 
 var tokens = Lexer.TokenizeString(test3);
@@ -29,5 +31,8 @@ var lowerer = new AstLowerer();
 lowerer.LowerFunc(parseResult);
 /*foreach (var stmt in parseResult)
     lowerer.LowerStmt(stmt);*/
-
-Console.WriteLine(tokens);
+//new RegAlloc().RegAllocBlock(lowerer.GetBlock());
+var block = lowerer.GetBlock();
+//var output = File.Open("output.nasm", FileMode.Create);
+AsmCompile.CompileBlock(Console.Out, block);
+//output.Close();

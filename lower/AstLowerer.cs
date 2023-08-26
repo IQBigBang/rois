@@ -22,6 +22,8 @@ namespace RoisLang.lower
             Locals = new Dictionary<string, MidValue>();
         }
 
+        public MidBlock GetBlock() => Builder.CurrentBlock;
+
         public void LowerFunc(Func f)
         {
             var block = new MidBlock(0, f.Arguments.Select(x => x.Item2).ToList());

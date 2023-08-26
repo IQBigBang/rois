@@ -17,6 +17,7 @@ namespace RoisLang.mid_ir
         public abstract bool HasOut();
         // Required by the builder
         public abstract void SetOut(MidValue val);
+        public abstract MidValue GetOut();
         public abstract TypeRef OutType();
         public abstract MidValue[] AllArgs();
         public abstract void Map(Func<MidValue, MidValue> map);
@@ -37,6 +38,7 @@ namespace RoisLang.mid_ir
 
         public override bool HasOut() => true;
         public override void SetOut(MidValue val) => Out = val;
+        public override MidValue GetOut() => Out;
         public override TypeRef OutType() => TypeRef.INT;
         public override MidValue[] AllArgs() => new MidValue[] { Out, Lhs, Rhs };
         public override void Map(Func<MidValue, MidValue> map)
@@ -49,7 +51,6 @@ namespace RoisLang.mid_ir
         {
             Console.WriteLine($"{Out} = IAdd {Lhs}, {Rhs}");
         }
-
     }
 
     public class MidIRet : MidInstr
@@ -68,6 +69,7 @@ namespace RoisLang.mid_ir
         }
 
         public override bool HasOut() => false;
+        public override MidValue GetOut() => MidValue.Null();
         public override TypeRef OutType() => TypeRef.VOID;
         public override void SetOut(MidValue val) { }
 

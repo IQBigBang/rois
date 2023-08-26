@@ -79,5 +79,23 @@ namespace RoisLang.mid_ir
                 instr.Dump();
             }
         }
+
+        public IEnumerable<MidValue> AllRegisters()
+        {
+            foreach (var arg in Arguments())
+            {
+                yield return arg;
+            }
+
+            foreach (var instr in Instrs)
+            {
+                if (instr != null && instr.HasOut())
+                {
+                    yield return instr.GetOut();
+                }
+            }
+        }
+
+        public int BlockId => (int)blockId;
     }
 }

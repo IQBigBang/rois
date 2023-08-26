@@ -51,6 +51,11 @@ namespace RoisLang.mid_ir
             return int.MaxValue;
         }
 
+        public int GetIntValue()
+        {
+            return (int)value;
+        }
+
         public override bool Equals(object? obj)
         {
             // TODO: should we check types for equality (?)
