@@ -19,9 +19,8 @@ foo = 855
 let c = foo";
 
 string test3 =
-@"def main(a: int, b: int):
-    let c = 1 + 2 + 3
-    let d = (a + b) + (b + a)
+@"def main(a: int, b: int) -> int:
+    return a + b
 ";
 
 var tokens = Lexer.TokenizeString(test3);

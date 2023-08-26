@@ -39,7 +39,8 @@ namespace RoisLang.lower
             {
                 LowerStmt(stmt);
             }
-            Builder.BuildRet();
+            if (f.Ret.IsVoid)
+                Builder.BuildRet();
             block.Dump();
         }
 
@@ -87,6 +88,12 @@ namespace RoisLang.lower
                             Locals[varExpr.Name] = value;
                         }
                         else throw new Exception();
+                        return;
+                    }
+                case ast.ReturnStmt returnStmt:
+                    {
+                        var value = LowerExpr(returnStmt.Value);
+                        Builder.BuildRet(value);
                         return;
                     }
                 default:

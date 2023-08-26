@@ -10,4 +10,5 @@ namespace RoisLang.ast
     public record DiscardStmt(Expr Expr) : Stmt();
     public record LetAssignStmt(string VarName, Expr Value) : Stmt();
     public record AssignStmt(Expr Lhs, Expr Value) : Stmt();
+    public record ReturnStmt(Expr Value) : Stmt();
 }

@@ -44,8 +44,13 @@ namespace RoisLang.parser
         private static readonly TokenListParser<Token, Stmt> DiscardStmt =
             Expr.Select(leftExpr => (Stmt)new DiscardStmt(leftExpr));
 
+        private static readonly TokenListParser<Token, Stmt> ReturnStmt =
+            Superpower.Parsers.Token.EqualTo(Token.KwReturn)
+            .IgnoreThen(Expr)
+            .Select(expr => (Stmt)new ReturnStmt(expr));
+
         private static readonly TokenListParser<Token, Stmt> ParseStmt =
-            LetStmt.Or(AssignStmt).Or(DiscardStmt)/*.Then(stmt => Superpower.Parsers.Token.EqualTo(Token.Nl).Value(stmt))*/;
+            LetStmt.Or(ReturnStmt).Or(AssignStmt).Or(DiscardStmt)/*.Then(stmt => Superpower.Parsers.Token.EqualTo(Token.Nl).Value(stmt))*/;
 
         private static TokenListParser<Token, Stmt[]> ParseStmts =
             ParseStmt.Then(stmt => Superpower.Parsers.Token.EqualTo(Token.Nl).Value(stmt)).Many();
@@ -58,6 +63,11 @@ namespace RoisLang.parser
                   .Select(type => (argName.ToStringValue(), type)))
             .ManyDelimitedBy(Superpower.Parsers.Token.EqualTo(Token.Comma));
 
+        private static readonly TokenListParser<Token, TypeRef> RetType =
+            Superpower.Parsers.Token.EqualTo(Token.Arrow)
+            .IgnoreThen(TypeName)
+            .OptionalOrDefault(TypeRef.VOID);
+
         private static readonly TokenListParser<Token, Func> ParseFuncDef =
             Superpower.Parsers.Token.EqualTo(Token.KwDef)
             .IgnoreThen(Superpower.Parsers.Token.EqualTo(Token.Sym))
@@ -66,15 +76,18 @@ namespace RoisLang.parser
                 .IgnoreThen(FuncDefArgs)
                 .Then(funcArgs =>
                     Superpower.Parsers.Token.EqualTo(Token.RParen)
-                    .IgnoreThen(Superpower.Parsers.Token.EqualTo(Token.Colon))
-                    .IgnoreThen(Superpower.Parsers.Token.EqualTo(Token.Nl))
-                    .IgnoreThen(Superpower.Parsers.Token.EqualTo(Token.Indent))
-                    .IgnoreThen(ParseStmts)
-                    .Then(body =>
-                        Superpower.Parsers.Token.EqualTo(Token.Dedent)
-                        .Value(new Func(funcName.ToStringValue(), funcArgs, body, TypeRef.VOID /*TODO*/))
+                    .IgnoreThen(RetType)
+                    .Then(retType => 
+                         Superpower.Parsers.Token.EqualTo(Token.Colon)
+                        .IgnoreThen(Superpower.Parsers.Token.EqualTo(Token.Nl))
+                        .IgnoreThen(Superpower.Parsers.Token.EqualTo(Token.Indent))
+                        .IgnoreThen(ParseStmts)
+                        .Then(body =>
+                            Superpower.Parsers.Token.EqualTo(Token.Dedent)
+                            .Value(new Func(funcName.ToStringValue(), funcArgs, body, retType))
+                        )
                     )
-                )
+               )
             );
 
         public static Func LexAndParse(string s)

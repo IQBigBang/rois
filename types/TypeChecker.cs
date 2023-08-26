@@ -10,15 +10,18 @@ namespace RoisLang.types
     public class TypeChecker
     {
         private Dictionary<string, TypeRef> Locals;
+        private TypeRef? Ret;
 
         public TypeChecker()
         {
             Locals = new Dictionary<string, TypeRef>();
+            Ret = null;
         }
 
         public void TypeckFunc(Func f)
         {
             Locals.Clear();
+            Ret = f.Ret;
             foreach (var (argName, argTy) in f.Arguments)
             {
                 Locals.Add(argName, argTy); // TODO
@@ -27,6 +30,8 @@ namespace RoisLang.types
             {
                 TypeckStmt(stmt);
             }
+            if (!Ret.IsVoid && f.Body.Last() is not ReturnStmt)
+                throw new Exception("Non-void functions must end with a return statement");
         }
 
         void TypeckStmt(Stmt stmt)
@@ -47,6 +52,13 @@ namespace RoisLang.types
                         var valueType = TypeckExpr(assignStmt.Value);
                         var lhs = TypeckExpr(assignStmt.Lhs);
                         if (!valueType.Equal(lhs))
+                            throw new Exception("Typechecking error");
+                        return;
+                    }
+                case ast.ReturnStmt returnStmt:
+                    {
+                        var typ = TypeckExpr(returnStmt.Value);
+                        if (!typ.Equal(Ret!))
                             throw new Exception("Typechecking error");
                         return;
                     }

@@ -22,7 +22,7 @@ namespace RoisLang.asm
             List<KeyValuePair<MidValue, int>> liveRangeEnds = GetRegLiveRangeEnds(block);
             
             // Now, onto the register allocation
-            for (int i = 0; i < block.Instrs.Count; i++)
+            for (int i = -1; i < block.Instrs.Count; i++)
             {
                 // first, end ranges = add registers back to the "free" list
                 foreach (var endingReg in liveRangeEnds.Where(x => x.Value == i))
@@ -58,7 +58,7 @@ namespace RoisLang.asm
         {
             Dictionary<MidValue, int> starts = new Dictionary<MidValue, int>();
             foreach (var arg in block.Arguments())
-                starts[arg] = 0;
+                starts[arg] = -1; // args start at minus one
             for (int i = 0; i < block.Instrs.Count; i++)
             {
                 var instr = block.Instrs[i];
@@ -76,7 +76,7 @@ namespace RoisLang.asm
             Dictionary<MidValue, int> ends = new Dictionary<MidValue, int>();
             // fill with zeros
             foreach (var reg in block.AllRegisters())
-                ends[reg] = 0;
+                ends[reg] = -1;
             for (int i = 0; i < block.Instrs.Count; i++)
             {
                 var instr = block.Instrs[i];

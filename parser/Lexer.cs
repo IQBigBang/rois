@@ -31,10 +31,16 @@ namespace RoisLang.parser
         Colon,
         // +
         Plus,
+        // -
+        Minus,
+        // ->
+        Arrow,
         // the 'let' keyword
         KwLet,
         // the 'def' keyword
         KwDef,
+        // the 'return' keyword
+        KwReturn,
     }
 
     public class Lexer
@@ -86,6 +92,13 @@ namespace RoisLang.parser
                     tokens.Add(SimpleToken(Token.Comma, 1));
                 else if (ch == '+')
                     tokens.Add(SimpleToken(Token.Plus, 1));
+                else if (ch == '-')
+                {
+                    if (Pos + 1 < Source.Length && Source[Pos + 1] == '>')
+                        tokens.Add(SimpleToken(Token.Arrow, 2));
+                    else
+                        tokens.Add(SimpleToken(Token.Minus, 1));
+                }
                 // symbols and numbers
                 else if (char.IsDigit(ch))
                     LexInt();
@@ -152,8 +165,10 @@ namespace RoisLang.parser
             string s = Source.Substring(Pos, len);
             if (s == "let")
                 tokens.Add(SimpleToken(Token.KwLet, 3));
-            if (s == "def")
+            else if (s == "def")
                 tokens.Add(SimpleToken(Token.KwDef, 3));
+            else if (s == "return")
+                tokens.Add(SimpleToken(Token.KwReturn, 6));
             else
                 tokens.Add(SimpleToken(Token.Sym, len));
         }
