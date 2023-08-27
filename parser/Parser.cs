@@ -91,10 +91,14 @@ namespace RoisLang.parser
                )
             );
 
-        public static Func LexAndParse(string s)
+        private static readonly TokenListParser<Token, ast.Program> ParseProgram =
+            ParseFuncDef.Then(func => Superpower.Parsers.Token.EqualTo(Token.Nl).Optional().Value(func))
+            .Many().Select(x => new ast.Program(x));
+
+        public static ast.Program LexAndParse(string s)
         {
             var tokens = Lexer.TokenizeString(s);
-            var result = ParseFuncDef(new Superpower.Model.TokenList<Token>(tokens.ToArray()));
+            var result = ParseProgram(new Superpower.Model.TokenList<Token>(tokens.ToArray()));
             if (!result.HasValue)
                 Console.WriteLine(result.FormatErrorMessageFragment());
             return result.Value;

@@ -9,16 +9,32 @@ namespace RoisLang.types
 {
     public class TypeChecker
     {
+        private Dictionary<string, TypeRef> Globals;
         private Dictionary<string, TypeRef> Locals;
         private TypeRef? Ret;
 
         public TypeChecker()
         {
+            Globals = new Dictionary<string, TypeRef>();
             Locals = new Dictionary<string, TypeRef>();
             Ret = null;
         }
 
-        public void TypeckFunc(Func f)
+        public void TypeckProgram(ast.Program program)
+        {
+            Globals.Clear();
+            foreach (var func in program.Functions)
+            {
+                var ftype = FuncType.New(func.Arguments.Select(x => x.Item2).ToList(), func.Ret);
+                if (Globals.ContainsKey(func.Name)) throw new Exception();
+                Globals[func.Name] = ftype;
+            }
+            // type-check all functions
+            foreach (var func in program.Functions)
+                TypeckFunc(func);
+        }
+
+        private void TypeckFunc(Func f)
         {
             Locals.Clear();
             Ret = f.Ret;
@@ -75,7 +91,11 @@ namespace RoisLang.types
                     expr.Ty = TypeRef.INT;
                     break;
                 case ast.VarExpr varExpr:
-                    expr.Ty = Locals[varExpr.Name];
+                    if (Locals.ContainsKey(varExpr.Name))
+                        expr.Ty = Locals[varExpr.Name];
+                    else if (Globals.ContainsKey(varExpr.Name))
+                        expr.Ty = Globals[varExpr.Name];
+                    else throw new Exception();
                     break;
                 case ast.BinOpExpr binOpExpr:
                     {

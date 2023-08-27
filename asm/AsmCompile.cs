@@ -9,7 +9,23 @@ namespace RoisLang.asm
 {
     public class AsmCompile
     {
-        public static void CompileBlock(TextWriter output, MidBlock block)
+        public static void CompileAllFuncs(TextWriter output, IEnumerable<MidFunc> funcs)
+        {
+            foreach (var func in funcs)
+            {
+                CompileFunc(output, func);
+                output.WriteLine();
+            }
+        }
+
+        public static void CompileFunc(TextWriter output, MidFunc func)
+        {
+            output.WriteLine($"{func.Name}:");
+            foreach (var block in func.Blocks)
+                CompileBlock(output, func.Name, block);
+        }
+
+        private static void CompileBlock(TextWriter output, string fname, MidBlock block)
         {
             // First, do RegAlloc
             var regAllocs = new RegAlloc().RegAllocBlock(block);
@@ -17,7 +33,7 @@ namespace RoisLang.asm
             var asmWriter = new AsmWriter(output, regAllocs);
 
             // write the block name in the assembly
-            asmWriter.WriteLn("bb{}:", block.BlockId.ToString());
+            asmWriter.WriteLn("{}_bb{}:", fname, block.BlockId.ToString());
             // if the block is the entry block, we have to do `mov`s from argument registers to assigned registers
             if (block.BlockId == 0)
             {

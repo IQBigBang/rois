@@ -19,10 +19,11 @@ namespace RoisLang.mid_ir
     /// </summary>
     public class MidValue
     {
-        // 0 = undefined, 1 = const int, 2 = local virtual register
+        // 0 = undefined, 1 = const int, 2 = local virtual register, 3 = global value
         private readonly int tag;
         // if tag==1  => Integer - the constant integer value
         //    tag==2  => Integer - the register number
+        //    tag==3  => MidFunc - a global value
         private readonly object value;
         // if it's a local virtual register
         private readonly uint blockId;
@@ -40,13 +41,18 @@ namespace RoisLang.mid_ir
         public static MidValue Null() => new(0, 0, TypeRef.UNKNOWN);
         public static MidValue ConstInt(int val) => new(1, val, TypeRef.INT);
         /// <summary>
-        /// Every register value SHOULD be a singleton!!
+        /// Every register value SHOULD be a singleton!
         /// </summary>
         internal static MidValue Reg(uint reg, uint blockId, TypeRef ty, Assertion this_is_a_singleton) => new(2, reg, ty, blockId);
+        /// <summary>
+        /// Every global value SHOULD be a singleton!
+        /// </summary>
+        internal static MidValue Global(MidFunc func, Assertion this_is_a_singleton) => new(3, func, func.FuncType);
 
         public bool IsNull => tag == 0;
         public bool IsConstInt => tag == 1;
         public bool IsReg => tag == 2;
+        public bool IsGlobal => tag == 3;
         
         public uint GetBasicBlock()
         {
@@ -66,6 +72,12 @@ namespace RoisLang.mid_ir
             else throw new InvalidOperationException();
         }
 
+        public MidFunc GetGlobalValue()
+        {
+            if (IsGlobal) return (MidFunc)value;
+            else throw new InvalidOperationException();
+        }
+
         public override bool Equals(object? obj)
         {
             if (obj is MidValue other)
@@ -78,6 +90,12 @@ namespace RoisLang.mid_ir
                 if (IsReg)
                     // TODO: should we check types for equality (?)
                     return GetRegNum() == other.GetRegNum() && GetBasicBlock() == other.GetBasicBlock();
+                if (IsGlobal)
+                {
+                    // there's no guaranteed way to test `MidFunc`s for equality, so we rely on references and name equality
+                    return ReferenceEquals(GetGlobalValue(), other.GetGlobalValue())
+                           || GetGlobalValue().Name == other.GetGlobalValue().Name;
+                }
             }
             return false;
         }
@@ -93,6 +111,7 @@ namespace RoisLang.mid_ir
             if (tag == 0) return "undefined";
             if (tag == 1) return "const " + value;
             if (tag == 2) return ty + " %" + value;
+            if (tag == 3) return "@" + GetGlobalValue().Name;
             return "!INVALID_VALUE";
         }
 

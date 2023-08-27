@@ -23,15 +23,24 @@ string test3 =
     return (a + b) - (b + a)
 ";
 
-var tokens = Lexer.TokenizeString(test3);
-var parseResult = Parser.LexAndParse(test3);
-new TypeChecker().TypeckFunc(parseResult);
+string test4 =
+@"def f():
+    let a = g
+
+def g():
+    let a = f
+";
+
+//var tokens = Lexer.TokenizeString(test3);
+var program = Parser.LexAndParse(test4);
+new TypeChecker().TypeckProgram(program);
 var lowerer = new AstLowerer();
-lowerer.LowerFunc(parseResult);
+var midFuncs = lowerer.LowerProgram(program);
+midFuncs.ForEach(x => x.Dump());
+Console.WriteLine();
 /*foreach (var stmt in parseResult)
     lowerer.LowerStmt(stmt);*/
 //new RegAlloc().RegAllocBlock(lowerer.GetBlock());
-var block = lowerer.GetBlock();
 //var output = File.Open("output.nasm", FileMode.Create);
-AsmCompile.CompileBlock(Console.Out, block);
+AsmCompile.CompileAllFuncs(Console.Out, midFuncs);
 //output.Close();

@@ -24,6 +24,7 @@ namespace RoisLang.types
 
         public bool Equal(TypeRef other)
         {
+            if (ReferenceEquals(this, other)) return true;
             if (IsVoid && other.IsVoid) return true;
             if (IsInt && other.IsInt) return true;
             if (IsFunc && other.IsFunc)

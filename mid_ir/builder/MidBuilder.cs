@@ -9,11 +9,11 @@ namespace RoisLang.mid_ir.builder
 {
     public class MidBuilder
     {
-        private MidBlock currentBlock;
+        private MidBlock? currentBlock;
 
-        public MidBuilder(MidBlock block)
+        public MidBuilder()
         {
-            currentBlock = block;
+            currentBlock = null;
         }
 
         public void SwitchBlock(MidBlock block)
@@ -21,7 +21,7 @@ namespace RoisLang.mid_ir.builder
             currentBlock = block;
         }
 
-        public MidBlock CurrentBlock => currentBlock;
+        public MidBlock? CurrentBlock => currentBlock;
 
         /// <summary>
         /// reg = IAdd lhs, rhs
@@ -31,7 +31,7 @@ namespace RoisLang.mid_ir.builder
             lhs.AssertType(TypeRef.INT);
             rhs.AssertType(TypeRef.INT);
             var instr = new mid_ir.MidIAddInstr { Out = MidValue.Null(), Lhs = lhs, Rhs = rhs };
-            return currentBlock.AddInstr(instr);
+            return currentBlock!.AddInstr(instr);
         }
 
         public MidValue BuildISub(MidValue lhs, MidValue rhs)
@@ -39,14 +39,14 @@ namespace RoisLang.mid_ir.builder
             lhs.AssertType(TypeRef.INT);
             rhs.AssertType(TypeRef.INT);
             var instr = new mid_ir.MidISubInstr { Out = MidValue.Null(), Lhs = lhs, Rhs = rhs };
-            return currentBlock.AddInstr(instr);
+            return currentBlock!.AddInstr(instr);
         }
 
         public MidValue BuildRet() => BuildRet(MidValue.Null());
         public MidValue BuildRet(MidValue val)
         {
             var instr = new mid_ir.MidIRetInstr { Value = val };
-            return currentBlock.AddInstr(instr);
+            return currentBlock!.AddInstr(instr);
         }
     }
 }

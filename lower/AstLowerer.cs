@@ -14,25 +14,39 @@ namespace RoisLang.lower
     {
         private MidBuilder Builder;
         private Dictionary<string, MidValue> Locals;
+        private Dictionary<string, MidValue> Globals;
 
         public AstLowerer()
         {
-            var block = new MidBlock(0);
-            Builder = new MidBuilder(block);
+            Builder = new MidBuilder();
             Locals = new Dictionary<string, MidValue>();
+            Globals = new Dictionary<string, MidValue>();
         }
 
-        public MidBlock GetBlock() => Builder.CurrentBlock;
-
-        public void LowerFunc(Func f)
+        public List<MidFunc> LowerProgram(ast.Program program)
         {
-            var block = new MidBlock(0, f.Arguments.Select(x => x.Item2).ToList());
-            Builder.SwitchBlock(block);
+            List<MidFunc> midFuncs = new();
+            foreach (var func in program.Functions)
+            {
+                if (Globals.ContainsKey(func.Name)) throw new Exception();
+                var midFunc = new MidFunc(func.Name, func.Arguments.Select(x => x.Item2).ToList(), func.Ret);
+                midFuncs.Add(midFunc);
+                var value = MidValue.Global(midFunc, Assertion.X);
+                Globals.Add(func.Name, value);
+            }
+            for (int i = 0; i < program.Functions.Length; i++)
+                LowerFunc(program.Functions[i], midFuncs[i]);
+            return midFuncs;
+        }
+
+        private void LowerFunc(Func f, MidFunc target)
+        {
+            Builder.SwitchBlock(target.EntryBlock);
             Locals = new Dictionary<string, MidValue>();
             // add arguments
             for (int i = 0; i < f.Arguments.Length; i++)
             {
-                Locals.Add(f.Arguments[i].Item1, block.Argument(i));
+                Locals.Add(f.Arguments[i].Item1, target.EntryBlock.Argument(i));
             }
             // compile the body
             foreach (var stmt in f.Body)
@@ -41,7 +55,6 @@ namespace RoisLang.lower
             }
             if (f.Ret.IsVoid)
                 Builder.BuildRet();
-            block.Dump();
         }
 
         MidValue LowerExpr(ast.Expr expr)
@@ -51,7 +64,11 @@ namespace RoisLang.lower
                 case ast.IntExpr intExpr:
                     return MidValue.ConstInt(intExpr.Value);
                 case ast.VarExpr varExpr:
-                    return Locals[varExpr.Name];
+                    if (Locals.ContainsKey(varExpr.Name))
+                        return Locals[varExpr.Name];
+                    else if (Globals.ContainsKey(varExpr.Name))
+                        return Globals[varExpr.Name];
+                    else throw new Exception();
                 case ast.BinOpExpr binOpExpr:
                     {
                         var lhs = LowerExpr(binOpExpr.Lhs);

@@ -22,4 +22,14 @@ namespace RoisLang.ast
             Ret = ret;
         }
     }
+
+    public class Program
+    {
+        public Func[] Functions;
+
+        public Program(Func[]? functions = null)
+        {
+            Functions = functions ?? Array.Empty<Func>();
+        }
+    }
 }
