@@ -23,7 +23,7 @@ namespace RoisLang.asm
             {
                 // Windows x64 calling convention = arguments in rcx, rdx, r8, r9 (in this order)
                 GpReg[] argumentRegs = new GpReg[] { GpReg.Rcx, GpReg.Rdx, GpReg.R8, GpReg.R9 };
-                asmWriter.WriteMoves(argumentRegs, block.Arguments().ToArray());
+                asmWriter.WriteMoves(argumentRegs, block.Arguments.ToArray());
             }
             // then, compile the instructions
             foreach (var instr in block.Instrs)

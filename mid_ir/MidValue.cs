@@ -13,61 +13,81 @@ namespace RoisLang.mid_ir
     /// 1) virtual register (local)
     /// 2) constant value (of type int)
     /// 3) global value
+    /// 
+    /// MidValue's should generally speaking NOT be manually constructed,
+    /// because they rely on POINTER equality
     /// </summary>
-    public struct MidValue
+    public class MidValue
     {
-        private TypeRef ty;
         // 0 = undefined, 1 = const int, 2 = local virtual register
-        private ushort tag;
-        private ushort extra;
-        private uint value;
+        private readonly int tag;
+        // if tag==1  => Integer - the constant integer value
+        //    tag==2  => Integer - the register number
+        private readonly object value;
+        // if it's a local virtual register
+        private readonly uint blockId;
+        private readonly TypeRef ty;
 
-        private MidValue(ushort tag, uint value, TypeRef ty, ushort extra = 0)
+        private MidValue(int tag, object value, TypeRef ty, uint blockId = 0)
         {
             this.tag = tag;
-            this.extra = extra;
+            this.blockId = blockId;
             this.value = value;
             this.ty = ty;
         }
 
         //public static MidValue Null = new MidValue(0, 0, TypeRef.UNKNOWN);
         public static MidValue Null() => new(0, 0, TypeRef.UNKNOWN);
-        public static MidValue ConstInt(int val) => new(1, (uint)val, TypeRef.INT);
-        public static MidValue Reg(uint reg, uint blockId, TypeRef ty) => new(2, reg, ty, (ushort)blockId);
+        public static MidValue ConstInt(int val) => new(1, val, TypeRef.INT);
+        /// <summary>
+        /// Every register value SHOULD be a singleton!!
+        /// </summary>
+        internal static MidValue Reg(uint reg, uint blockId, TypeRef ty, Assertion this_is_a_singleton) => new(2, reg, ty, blockId);
 
         public bool IsNull => tag == 0;
         public bool IsConstInt => tag == 1;
         public bool IsReg => tag == 2;
         
-        public int GetBasicBlock()
+        public uint GetBasicBlock()
         {
-            if (IsReg) return extra;
-            return -1;
+            if (IsReg) return blockId;
+            else throw new InvalidOperationException();
         }
 
-        public int GetRegNum()
+        public uint GetRegNum()
         {
-            if (IsReg) return (int)value;
-            return int.MaxValue;
+            if (IsReg) return (uint)value;
+            else throw new InvalidOperationException();
         }
 
         public int GetIntValue()
         {
-            return (int)value;
+            if (IsConstInt) return (int)value;
+            else throw new InvalidOperationException();
         }
 
         public override bool Equals(object? obj)
         {
-            // TODO: should we check types for equality (?)
-            return (obj is MidValue other && other.tag == tag && other.value == value && other.extra == extra);
+            if (obj is MidValue other)
+            {
+                if (ReferenceEquals(this, other)) return true;
+                if (tag != other.tag) return false;
+                if (IsNull) return true;
+                if (IsConstInt)
+                    return GetIntValue() == other.GetIntValue();
+                if (IsReg)
+                    // TODO: should we check types for equality (?)
+                    return GetRegNum() == other.GetRegNum() && GetBasicBlock() == other.GetBasicBlock();
+            }
+            return false;
         }
-        public override int GetHashCode() => HashCode.Combine(tag, value, extra);
+        public override int GetHashCode() => HashCode.Combine(tag, value, blockId);
 
         public static bool operator ==(MidValue left, MidValue right) => left.Equals(right);
 
         public static bool operator !=(MidValue left, MidValue right) => !left.Equals(right);
 
-        public void Dump() => Console.Write(this.ToString());
+        public void Dump() => Console.Write(ToString());
         public override string ToString()
         {
             if (tag == 0) return "undefined";
@@ -78,7 +98,16 @@ namespace RoisLang.mid_ir
 
         public void AssertType(TypeRef typ)
         {
-            if (!ty.Equal(typ)) throw new Exception("");
+            if (!ty.Equal(typ)) throw new Exception("Wrong type of MidValue");
         }
+    }
+
+    /// <summary>
+    /// The purpose of the `Assertion` type
+    /// is to alarm the programmer to pay special attention to a certain invariant
+    /// </summary>
+    internal struct Assertion {
+        public Assertion() {}
+        public static Assertion X = new();
     }
 }

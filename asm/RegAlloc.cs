@@ -57,7 +57,7 @@ namespace RoisLang.asm
         private List<KeyValuePair<MidValue, int>> GetRegLiveRangeStarts(MidBlock block)
         {
             Dictionary<MidValue, int> starts = new Dictionary<MidValue, int>();
-            foreach (var arg in block.Arguments())
+            foreach (var arg in block.Arguments)
                 starts[arg] = -1; // args start at minus one
             for (int i = 0; i < block.Instrs.Count; i++)
             {
@@ -101,11 +101,5 @@ namespace RoisLang.asm
         Rsi,
         Rax = 6,
         RNull
-    }
-
-    class LiveRange
-    {
-        public int Start;
-        public int End;
     }
 }

@@ -14,31 +14,27 @@ namespace RoisLang.mid_ir
     public class MidBlock
     {
         private readonly uint blockId;
-        public List<TypeRef> arguments;
-        public List<MidInstr?> Instrs;
+        private readonly List<MidValue> arguments;
+        private readonly List<MidInstr?> instrs;
+
+        public IReadOnlyList<MidValue> Arguments => arguments;
+        public IReadOnlyList<MidInstr?> Instrs => instrs;
 
         private uint NextInstrRegIdx => (uint)(arguments.Count + Instrs.Count);
 
-        public MidBlock(uint blockId, List<TypeRef>? arguments = null)
+        public MidBlock(uint blockId, List<TypeRef>? argumentTypes_ = null)
         {
-            this.arguments = arguments ?? new List<TypeRef>();
-            this.blockId = blockId;
-            Instrs = new List<MidInstr?>();
-        }
-        
-        public IEnumerable<MidValue> Arguments()
-        {
-            for (int i = 0; i < arguments.Count; i++)
+            var argumentTypes = argumentTypes_ ?? new List<TypeRef>();
+            this.arguments = new List<MidValue>();
+            for (int i = 0; i < argumentTypes.Count; i++)
             {
-                yield return MidValue.Reg((uint)i, blockId, arguments[i]);
+                arguments.Add(MidValue.Reg((uint)i, blockId, argumentTypes[i], Assertion.X));
             }
+            this.blockId = blockId;
+            instrs = new List<MidInstr?>();
         }
 
-        public MidValue Argument(int i)
-        {
-            if (i >= arguments.Count) return MidValue.Null();
-            return MidValue.Reg((uint)i, blockId, arguments[i]);
-        }
+        public MidValue Argument(int i) => Arguments[i];
 
         public MidValue AddInstr(MidInstr instr)
         {
@@ -57,21 +53,21 @@ namespace RoisLang.mid_ir
 
             if (instr.HasOut())
             {
-                var newReg = MidValue.Reg(NextInstrRegIdx, blockId, instr.OutType());
+                var newReg = MidValue.Reg(NextInstrRegIdx, blockId, instr.OutType(), Assertion.X);
                 instr.SetOut(newReg);
-                Instrs.Add(instr);
+                instrs.Add(instr);
                 return newReg;
             }
             else
             {
-                Instrs.Add(instr);
+                instrs.Add(instr);
                 return MidValue.Null();
             }
         }
 
         public void Dump()
         {
-            Console.WriteLine($"BB{blockId}({string.Join(", ", Arguments())}):");
+            Console.WriteLine($"BB{blockId}({string.Join(", ", Arguments)}):");
             foreach (var instr in Instrs)
             {
                 if (instr == null) continue;
@@ -82,7 +78,7 @@ namespace RoisLang.mid_ir
 
         public IEnumerable<MidValue> AllRegisters()
         {
-            foreach (var arg in Arguments())
+            foreach (var arg in Arguments)
             {
                 yield return arg;
             }
