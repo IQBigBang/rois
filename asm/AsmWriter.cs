@@ -21,19 +21,39 @@ namespace RoisLang.asm
             this.regs = regs;
         }
 
-        // compile moves from certain physical registers to virtual registers or vice versa
-        public void WriteMoves(GpReg[] from, MidValue[] to, bool reverse = false)
+        public const bool ASM_MOVES_USE_NEW_ALGORITHM = true;
+
+        // compile moves from certain physical registers to virtual registers
+        public void WriteMoves(MidValue[] from, GpReg[] to, bool reverse = false)
         {
-            for (int i = 0; i < Math.Min(from.Length, to.Length); i++)
+            if (ASM_MOVES_USE_NEW_ALGORITHM)
             {
-                if (to[i].IsReg && regs[to[i]] == from[i]) continue; // from==to, no MOVing neccessary
-                if (to[i].IsReg && regs[to[i]] == GpReg.RNull) continue; // `mov`ing to RNull => noop
-                if (reverse)
-                    // move to --> from
-                    WriteLn("mov {b64}, {b64}", from[i], to[i]);
-                else
-                    // move from --> to
-                    WriteLn("mov {b64}, {b64}", to[i], from[i]);
+                // use the MovesAlgorithm
+                var moves = MovesAlgorithm.CompileMoves(from, to, reverse, regs);
+                foreach (var move in moves)
+                {
+                    if (move is MovesAlgorithm.MovIR movIR)
+                        WriteLn("mov {b64}, {b64}", movIR.dest, movIR.value);
+                    if (move is MovesAlgorithm.MovRR movRR)
+                        WriteLn("mov {b64}, {b64}", movRR.dest, movRR.value);
+                    if (move is MovesAlgorithm.Swap swap)
+                        WriteLn("xchg {b64}, {b64}", swap.one, swap.two);
+                }
+            }
+            else
+            {
+                // The old (incorrect!) approach
+                for (int i = 0; i < Math.Min(from.Length, to.Length); i++)
+                {
+                    if (from[i].IsReg && regs[from[i]] == to[i]) continue; // from==to, no MOVing neccessary
+                    if (from[i].IsReg && regs[from[i]] == GpReg.RNull) continue; // `mov`ing to/from RNull => noop
+                    if (reverse)
+                        // move to --> from
+                        WriteLn("mov {b64}, {b64}", from[i], to[i]);
+                    else
+                        // move from --> to
+                        WriteLn("mov {b64}, {b64}", to[i], from[i]);
+                }
             }
         }
 
