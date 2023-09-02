@@ -32,4 +32,9 @@ namespace RoisLang.ast
         }
         public override bool IsValidLhs() => false;
     }
+
+    public record CallExpr(Expr Callee/*no arguments yet*/) : Expr()
+    {
+        public override bool IsValidLhs() => false;
+    }
 }

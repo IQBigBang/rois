@@ -113,11 +113,27 @@ namespace RoisLang.asm
                         WriteLn("sub {b32}, {b32}", iSubInstr.Out, iSubInstr.Rhs);
                     }
                     break;
-                case MidIRetInstr iRetInstr:
+                case MidRetInstr retInstr:
                     {
-                        if (!iRetInstr.Value.IsNull)
-                            WriteLn("mov rax, {b64}", iRetInstr.Value);
+                        if (!retInstr.Value.IsNull)
+                            WriteLn("mov rax, {b64}", retInstr.Value);
                         WriteLn("ret");
+                    }
+                    break;
+                case MidCallInstr callInstr:
+                    {
+                        // first preserve registers
+                        var liveRegisters = ((LiveRegData)callInstr.extra!).LiveRegisters;
+                        foreach (var lv in liveRegisters)
+                            WriteLn("push {b64}", lv);
+                        // now the call
+                        WriteLn("call {addr}", callInstr.Callee);
+                        // if there is a result, move it into the correct register
+                        if (!callInstr.Out.IsNull)
+                            WriteLn("mov {b64}, rax", callInstr.Out);
+                        // restore the registers
+                        foreach (var lv in liveRegisters.Reverse<GpReg>())
+                            WriteLn("pop {b64}", lv);
                     }
                     break;
                 default:
@@ -179,6 +195,14 @@ namespace RoisLang.asm
             {
                 WriteGpReg(regs[midValue], formatSpecifiers);
                 return;
+            }
+            if (midValue.IsGlobal)
+            {
+                if (formatSpecifiers.Contains("addr"))
+                {
+                    output.Write(midValue.GetGlobalValue().Name);
+                    return;
+                }
             }
             throw new Exception("Invalid format");
         }

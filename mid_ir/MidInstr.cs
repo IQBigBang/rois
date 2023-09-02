@@ -28,6 +28,23 @@ namespace RoisLang.mid_ir
         /// Replace all references to a certain register
         /// </summary>
         public void Replace(MidValue from, MidValue to) => Map((x) => x == from ? to : x);
+
+        /// <summary>
+        /// If this is true, the `LiveRegData` is inserted when register allocation happens
+        /// </summary>
+        public virtual bool RequiresLiveRegData => false;
+        public InstrExtraData? extra;
+    }
+
+    public abstract class InstrExtraData { }
+    public class LiveRegData : InstrExtraData
+    {
+        /// <summary>
+        /// Which registers are live and need to be preserved through this instruction.
+        /// This information is important for e.g. `call` instructions
+        /// </summary>
+        public readonly List<asm.GpReg> LiveRegisters;
+        public LiveRegData(List<asm.GpReg> liveRegisters) {  LiveRegisters = liveRegisters; }
     }
 
     public class MidIAddInstr : MidInstr
@@ -76,7 +93,7 @@ namespace RoisLang.mid_ir
         }
     }
 
-    public class MidIRetInstr : MidInstr
+    public class MidRetInstr : MidInstr
     {
         // This may be null, which means a "void value" is returned
         public MidValue Value;
@@ -100,7 +117,35 @@ namespace RoisLang.mid_ir
         {
             Value = map(Value);
         }
+    }
 
+    public class MidCallInstr : MidInstr
+    {
+        // May be null, if the function returns void
+        public MidValue Out;
+        public MidValue Callee;
 
+        public override bool HasOut() => !OutType().IsVoid;
+        public override void SetOut(MidValue val) { if (HasOut()) Out = val; }
+        public override MidValue GetOut() => Out;
+        public override TypeRef OutType() => ((FuncType)Callee.GetType()).Ret;
+        public override MidValue[] AllArgs() => new MidValue[] { Out, Callee };
+        public override void Map(Func<MidValue, MidValue> map)
+        {
+            Out = map(Out);
+            Callee = map(Callee);
+        }
+        public override void Dump()
+        {
+            if (Out.IsNull)
+                Console.WriteLine($"Call {Callee}");
+            else
+                Console.WriteLine($"{Out} = Call {Callee}");
+        }
+
+        /// <summary>
+        /// CallInstr performs a call to foreign code, it needs to know which registers to preserve
+        /// </summary>
+        public override bool RequiresLiveRegData => true;
     }
 }

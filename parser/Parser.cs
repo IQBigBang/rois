@@ -20,8 +20,14 @@ namespace RoisLang.parser
             // `Lazy` must be used to add a level of indirection (because the `Expr` field is not initialized at the moment)
             .Or(Lazy(GetExpr).Between(Superpower.Parsers.Token.EqualTo(Token.LParen), Superpower.Parsers.Token.EqualTo(Token.RParen)));
 
+        private static readonly TokenListParser<Token, Expr> Call =
+            Atom.Then(atom => Superpower.Parsers.Token.EqualTo(Token.LParen)
+                               .IgnoreThen(Superpower.Parsers.Token.EqualTo(Token.RParen))
+                                .Value((Expr)new CallExpr(atom))
+                                .OptionalOrDefault(atom));
+
         private static readonly TokenListParser<Token, Expr> Expr =
-            Atom.Chain(Superpower.Parsers.Token.EqualTo(Token.Plus).Or(Superpower.Parsers.Token.EqualTo(Token.Minus)), Atom,
+            Call.Chain(Superpower.Parsers.Token.EqualTo(Token.Plus).Or(Superpower.Parsers.Token.EqualTo(Token.Minus)), Call,
                 (op, lhs, rhs) => new BinOpExpr(lhs, rhs,
                     op.ToStringValue() == "+" ? BinOpExpr.Ops.Add : op.ToStringValue() == "-" ? BinOpExpr.Ops.Sub : throw new Exception()));
 
@@ -35,15 +41,13 @@ namespace RoisLang.parser
                             .IgnoreThen(Expr)
                             .Select(varValue => (Stmt)new LetAssignStmt(varName, varValue)));
 
-        private static readonly TokenListParser<Token, Stmt> AssignStmt =
+        private static readonly TokenListParser<Token, Stmt> AssignOrDiscardStmt =
             Expr.Then(leftExpr =>
                 Superpower.Parsers.Token.EqualTo(Token.Assign)
                 .IgnoreThen(Expr)
                 .Select(rightExpr => (Stmt)new AssignStmt(leftExpr, rightExpr))
+                .OptionalOrDefault((Stmt)new DiscardStmt(leftExpr))
             );
-
-        private static readonly TokenListParser<Token, Stmt> DiscardStmt =
-            Expr.Select(leftExpr => (Stmt)new DiscardStmt(leftExpr));
 
         private static readonly TokenListParser<Token, Stmt> ReturnStmt =
             Superpower.Parsers.Token.EqualTo(Token.KwReturn)
@@ -51,7 +55,7 @@ namespace RoisLang.parser
             .Select(expr => (Stmt)new ReturnStmt(expr));
 
         private static readonly TokenListParser<Token, Stmt> ParseStmt =
-            LetStmt.Or(ReturnStmt).Or(AssignStmt).Or(DiscardStmt)/*.Then(stmt => Superpower.Parsers.Token.EqualTo(Token.Nl).Value(stmt))*/;
+            LetStmt.Or(ReturnStmt).Or(AssignOrDiscardStmt);
 
         private static TokenListParser<Token, Stmt[]> ParseStmts =
             ParseStmt.Then(stmt => Superpower.Parsers.Token.EqualTo(Token.Nl).Value(stmt)).Many();

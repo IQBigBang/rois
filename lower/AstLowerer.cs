@@ -82,6 +82,11 @@ namespace RoisLang.lower
                         }
                         else throw new NotImplementedException();
                     }
+                case ast.CallExpr callExpr:
+                    {
+                        var callee = LowerExpr(callExpr.Callee);
+                        return Builder.BuildCall(callee);
+                    }
                 default:
                     throw new NotImplementedException();
             }

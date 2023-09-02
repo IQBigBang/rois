@@ -119,6 +119,8 @@ namespace RoisLang.mid_ir
         {
             if (!ty.Equal(typ)) throw new Exception("Wrong type of MidValue");
         }
+
+        public new TypeRef GetType() => ty;
     }
 
     /// <summary>

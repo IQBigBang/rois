@@ -39,6 +39,13 @@ namespace RoisLang.asm
                         freeRegisters.Add(allocations[endingReg.Key]);
                     }
                 }
+
+                // if the instruction requires it, write LiveReg data
+                if (i > -1 && block.Instrs[i] != null && block.Instrs[i].RequiresLiveRegData)
+                {
+                    block.Instrs[i].extra = new LiveRegData(allocations.Values.ToList());
+                }
+
                 // then, assign new registers
                 foreach (var startingReg in liveRangeStarts.Where(x => x.Value == i))
                 {
