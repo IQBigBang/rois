@@ -130,6 +130,12 @@ namespace RoisLang.asm
                             new VertValue(value.GetIntValue()),
                             new VertRegister(dest)));
                     }
+                    else if (value.IsConstBool)
+                    {
+                        graph.AddVerticesAndEdge(new Edge<Vertex>(
+                            new VertValue(value.GetBoolValue() ? 1 : 0),
+                            new VertRegister(dest)));
+                    }
                     else if (value.IsReg)
                     {
                         var valueReg = allocatedRegs[value];

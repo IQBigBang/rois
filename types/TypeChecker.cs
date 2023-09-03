@@ -90,6 +90,9 @@ namespace RoisLang.types
                 case ast.IntExpr:
                     expr.Ty = TypeRef.INT;
                     break;
+                case ast.BoolLit:
+                    expr.Ty = TypeRef.BOOL;
+                    break;
                 case ast.VarExpr varExpr:
                     if (Locals.ContainsKey(varExpr.Name))
                         expr.Ty = Locals[varExpr.Name];

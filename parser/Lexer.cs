@@ -41,6 +41,8 @@ namespace RoisLang.parser
         KwDef,
         // the 'return' keyword
         KwReturn,
+        KwTrue,
+        KwFalse,
     }
 
     public class Lexer
@@ -169,6 +171,10 @@ namespace RoisLang.parser
                 tokens.Add(SimpleToken(Token.KwDef, 3));
             else if (s == "return")
                 tokens.Add(SimpleToken(Token.KwReturn, 6));
+            else if (s == "true")
+                tokens.Add(SimpleToken(Token.KwTrue, 4));
+            else if (s == "false")
+                tokens.Add(SimpleToken(Token.KwFalse, 5));
             else
                 tokens.Add(SimpleToken(Token.Sym, len));
         }

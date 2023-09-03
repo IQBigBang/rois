@@ -11,10 +11,12 @@ namespace RoisLang.types
         public abstract bool IsVoid { get; }
         public abstract bool IsInt { get; }
         public abstract bool IsFunc { get; }
+        public bool IsBool => this is BoolType;
 
         public static readonly TypeRef UNKNOWN = new TypeUnknown();
         public static readonly TypeRef INT = new IntType();
         public static readonly TypeRef VOID = new VoidType();
+        public static readonly TypeRef BOOL = new BoolType();
 
         public override bool Equals(object? obj)
         {
@@ -27,6 +29,7 @@ namespace RoisLang.types
             if (ReferenceEquals(this, other)) return true;
             if (IsVoid && other.IsVoid) return true;
             if (IsInt && other.IsInt) return true;
+            if (IsBool && other.IsBool) return true;
             if (IsFunc && other.IsFunc)
             {
                 var this_ = (FuncType)this;

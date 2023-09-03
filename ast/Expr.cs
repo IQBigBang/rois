@@ -13,6 +13,11 @@ namespace RoisLang.ast
         public abstract bool IsValidLhs();
     };
 
+    public record BoolLit(bool Value) : Expr()
+    {
+        public override bool IsValidLhs() => false;
+    }
+
     public record IntExpr(int Value) : Expr()
     {
         public override bool IsValidLhs() => false;

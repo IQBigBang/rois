@@ -63,6 +63,8 @@ namespace RoisLang.lower
             {
                 case ast.IntExpr intExpr:
                     return MidValue.ConstInt(intExpr.Value);
+                case ast.BoolLit boolExpr:
+                    return MidValue.ConstBool(boolExpr.Value);
                 case ast.VarExpr varExpr:
                     if (Locals.ContainsKey(varExpr.Name))
                         return Locals[varExpr.Name];

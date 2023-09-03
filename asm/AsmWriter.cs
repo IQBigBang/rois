@@ -195,6 +195,19 @@ namespace RoisLang.asm
                     return;
                 }
             }
+            if (midValue.IsConstBool)
+            {
+                if (formatSpecifiers.Contains("b64"))
+                {
+                    output.Write("qword " + (midValue.GetBoolValue() ? "1" : "0"));
+                    return;
+                }
+                if (formatSpecifiers.Contains("b32"))
+                {
+                    output.Write("dword " + (midValue.GetBoolValue() ? "1" : "0"));
+                    return;
+                }
+            }
             if (midValue.IsReg)
             {
                 WriteGpReg(regs[midValue], formatSpecifiers);

@@ -19,9 +19,9 @@ namespace RoisLang.mid_ir
     /// </summary>
     public class MidValue
     {
-        // 0 = undefined, 1 = const int, 2 = local virtual register, 3 = global value
+        // 0 = undefined, 1 = const value, 2 = local virtual register, 3 = global value
         private readonly int tag;
-        // if tag==1  => Integer - the constant integer value
+        // if tag==1  => IConstValue
         //    tag==2  => Integer - the register number
         //    tag==3  => MidFunc - a global value
         private readonly object value;
@@ -39,7 +39,8 @@ namespace RoisLang.mid_ir
 
         //public static MidValue Null = new MidValue(0, 0, TypeRef.UNKNOWN);
         public static MidValue Null() => new(0, 0, TypeRef.UNKNOWN);
-        public static MidValue ConstInt(int val) => new(1, val, TypeRef.INT);
+        public static MidValue ConstInt(int val) => new(1, new IntValue(val), TypeRef.INT);
+        public static MidValue ConstBool(bool val) => new(1, new BoolValue(val), TypeRef.BOOL);
         /// <summary>
         /// Every register value SHOULD be a singleton!
         /// </summary>
@@ -50,7 +51,9 @@ namespace RoisLang.mid_ir
         internal static MidValue Global(MidFunc func, Assertion this_is_a_singleton) => new(3, func, func.FuncType);
 
         public bool IsNull => tag == 0;
-        public bool IsConstInt => tag == 1;
+        public bool IsConst => tag == 1;
+        public bool IsConstInt => IsConst && value is IntValue;
+        public bool IsConstBool => IsConst && value is BoolValue;
         public bool IsReg => tag == 2;
         public bool IsGlobal => tag == 3;
         
@@ -68,7 +71,13 @@ namespace RoisLang.mid_ir
 
         public int GetIntValue()
         {
-            if (IsConstInt) return (int)value;
+            if (IsConstInt) return ((IntValue)value).Value;
+            else throw new InvalidOperationException();
+        }
+
+        public bool GetBoolValue()
+        {
+            if (IsConstBool) return ((BoolValue)value).Value;
             else throw new InvalidOperationException();
         }
 
@@ -87,6 +96,8 @@ namespace RoisLang.mid_ir
                 if (IsNull) return true;
                 if (IsConstInt)
                     return GetIntValue() == other.GetIntValue();
+                if (IsConstBool)
+                    return GetBoolValue() == other.GetBoolValue();
                 if (IsReg)
                     // TODO: should we check types for equality (?)
                     return GetRegNum() == other.GetRegNum() && GetBasicBlock() == other.GetBasicBlock();
@@ -130,5 +141,25 @@ namespace RoisLang.mid_ir
     internal struct Assertion {
         public Assertion() {}
         public static Assertion X = new();
+    }
+
+    public interface IConstValue { }
+    public struct IntValue : IConstValue
+    {
+        public int Value;
+        public IntValue(int value)
+        {
+            Value = value;
+        }
+        public override string ToString() => Value.ToString();
+    }
+    public struct BoolValue : IConstValue
+    {
+        public bool Value;
+        public BoolValue(bool value)
+        {
+            Value = value;
+        }
+        public override string ToString() => Value ? "true" : "false";
     }
 }
