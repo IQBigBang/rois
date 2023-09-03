@@ -49,9 +49,9 @@ namespace RoisLang.mid_ir.builder
             return currentBlock!.AddInstr(instr);
         }
 
-        public MidValue BuildCall(MidValue callee)
+        public MidValue BuildCall(MidValue callee, MidValue[] args)
         {
-            var instr = new MidCallInstr { Out = MidValue.Null(), Callee = callee };
+            var instr = new MidCallInstr { Out = MidValue.Null(), Callee = callee, Arguments = args };
             return currentBlock!.AddInstr(instr);
         }
     }

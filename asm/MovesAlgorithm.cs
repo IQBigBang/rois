@@ -44,7 +44,7 @@ namespace RoisLang.asm
                     if (graph.IsOutEdgesEmpty(vert))
                     {
                         // We found our starting node
-                        Console.WriteLine("Starting at " + vert);
+                        //Console.WriteLine("Starting at " + vert);
                         var inputs = GetInputEdgesOf(graph, vert);
                         if (inputs.Count == 0)
                         {

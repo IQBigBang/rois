@@ -126,6 +126,10 @@ namespace RoisLang.asm
                         var liveRegisters = ((LiveRegData)callInstr.extra!).LiveRegisters;
                         foreach (var lv in liveRegisters)
                             WriteLn("push {b64}", lv);
+                        // move arguments into registers
+                        // Windows x64 calling convention = arguments in rcx, rdx, r8, r9 (in this order)
+                        if (callInstr.Arguments.Length > 4) throw new Exception("More than 4 args not supported");
+                        WriteMoves(callInstr.Arguments, new GpReg[] { GpReg.Rcx, GpReg.Rdx, GpReg.R8, GpReg.R9 });
                         // now the call
                         WriteLn("call {addr}", callInstr.Callee);
                         // if there is a result, move it into the correct register

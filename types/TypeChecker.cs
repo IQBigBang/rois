@@ -114,7 +114,12 @@ namespace RoisLang.types
                         var callee = TypeckExpr(callExpr.Callee);
                         if (callee is FuncType ftype)
                         {
-                            if (ftype.Args.Count > 0) throw new Exception("Typechecking error");
+                            if (ftype.Args.Count != callExpr.Args.Length) throw new Exception("Typechecking error");
+                            for (int i = 0; i < ftype.Args.Count; i++)
+                            {
+                                if (!TypeckExpr(callExpr.Args[i]).Equal(ftype.Args[i]))
+                                    throw new Exception("Typechecking error");
+                            }
                             callExpr.Ty = ftype.Ret;
                         }
                         else throw new Exception("Typechecking error");

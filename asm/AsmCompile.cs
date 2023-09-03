@@ -37,6 +37,7 @@ namespace RoisLang.asm
             // if the block is the entry block, we have to do `mov`s from argument registers to assigned registers
             if (block.BlockId == 0)
             {
+                if (block.Arguments.Count > 4) throw new Exception("More than 4 args not supported");
                 // Windows x64 calling convention = arguments in rcx, rdx, r8, r9 (in this order)
                 GpReg[] argumentRegs = new GpReg[] { GpReg.Rcx, GpReg.Rdx, GpReg.R8, GpReg.R9 };
                 // moves from argument registers to allocated registers

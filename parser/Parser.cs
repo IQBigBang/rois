@@ -20,11 +20,15 @@ namespace RoisLang.parser
             // `Lazy` must be used to add a level of indirection (because the `Expr` field is not initialized at the moment)
             .Or(Lazy(GetExpr).Between(Superpower.Parsers.Token.EqualTo(Token.LParen), Superpower.Parsers.Token.EqualTo(Token.RParen)));
 
+        private static readonly TokenListParser<Token, Expr[]> ExprArgs =
+            Lazy(GetExpr).ManyDelimitedBy(Superpower.Parsers.Token.EqualTo(Token.Comma));
+
         private static readonly TokenListParser<Token, Expr> Call =
             Atom.Then(atom => Superpower.Parsers.Token.EqualTo(Token.LParen)
-                               .IgnoreThen(Superpower.Parsers.Token.EqualTo(Token.RParen))
-                                .Value((Expr)new CallExpr(atom))
-                                .OptionalOrDefault(atom));
+                                .IgnoreThen(ExprArgs)
+                                .Then(args => Superpower.Parsers.Token.EqualTo(Token.RParen)
+                                              .Value((Expr)new CallExpr(atom, args))
+                                ).OptionalOrDefault(atom));
 
         private static readonly TokenListParser<Token, Expr> Expr =
             Call.Chain(Superpower.Parsers.Token.EqualTo(Token.Plus).Or(Superpower.Parsers.Token.EqualTo(Token.Minus)), Call,

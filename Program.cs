@@ -1,6 +1,7 @@
 ﻿// See https://aka.ms/new-console-template for more information
 using RoisLang.asm;
 using RoisLang.lower;
+using RoisLang.mid_ir;
 using RoisLang.parser;
 using RoisLang.types;
 
@@ -31,8 +32,19 @@ def g():
     let a = f
 ";
 
+string test5 =
+@"def increment(x: int) -> int:
+    return increment(x + 1)
+
+def sumall(a: int, b: int, c: int, d: int) -> int:
+    return a + b + c + d
+
+def wrongfib(n: int) -> int:
+    return wrongfib(n - 1) + wrongfib(n - 2)
+";
+
 //var tokens = Lexer.TokenizeString(test3);
-var program = Parser.LexAndParse(test4);
+var program = Parser.LexAndParse(test5);
 new TypeChecker().TypeckProgram(program);
 var lowerer = new AstLowerer();
 var midFuncs = lowerer.LowerProgram(program);

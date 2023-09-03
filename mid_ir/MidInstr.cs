@@ -124,23 +124,33 @@ namespace RoisLang.mid_ir
         // May be null, if the function returns void
         public MidValue Out;
         public MidValue Callee;
+        public MidValue[] Arguments;
 
         public override bool HasOut() => !OutType().IsVoid;
         public override void SetOut(MidValue val) { if (HasOut()) Out = val; }
         public override MidValue GetOut() => Out;
         public override TypeRef OutType() => ((FuncType)Callee.GetType()).Ret;
-        public override MidValue[] AllArgs() => new MidValue[] { Out, Callee };
+        public override MidValue[] AllArgs() {
+            var l = new List<MidValue> { Out, Callee };
+            l.AddRange(Arguments);
+            return l.ToArray();
+        }
         public override void Map(Func<MidValue, MidValue> map)
         {
             Out = map(Out);
             Callee = map(Callee);
+            Arguments = Arguments.Select(map).ToArray();
         }
         public override void Dump()
         {
-            if (Out.IsNull)
-                Console.WriteLine($"Call {Callee}");
-            else
-                Console.WriteLine($"{Out} = Call {Callee}");
+            if (!Out.IsNull)
+                Console.Write($"{Out} = ");
+            Console.Write($"{Callee}");
+            for (int i = 0; i < Arguments.Length; i++)
+            {
+                Console.Write($", {Arguments[i]}");
+            }
+            Console.WriteLine();
         }
 
         /// <summary>

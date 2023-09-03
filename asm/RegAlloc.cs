@@ -16,7 +16,8 @@ namespace RoisLang.asm
     {
         public Dictionary<MidValue, GpReg> RegAllocBlock(MidBlock block)
         {
-            SortedSet<GpReg> freeRegisters = new() { GpReg.Rcx, GpReg.Rdx, GpReg.R8, GpReg.R9, GpReg.Rdi, GpReg.Rsi, GpReg.Rax };
+            SortedSet<GpReg> allRegisters = new() { GpReg.Rcx, GpReg.Rdx, GpReg.R8, GpReg.R9, GpReg.Rdi, GpReg.Rsi, GpReg.Rax };
+            SortedSet<GpReg> freeRegisters = new(allRegisters);
             Dictionary<MidValue, GpReg> allocations = new();
             List<KeyValuePair<MidValue, int>> liveRangeStarts = GetRegLiveRangeStarts(block);
             List<KeyValuePair<MidValue, int>> liveRangeEnds = GetRegLiveRangeEnds(block);
@@ -43,7 +44,7 @@ namespace RoisLang.asm
                 // if the instruction requires it, write LiveReg data
                 if (i > -1 && block.Instrs[i] != null && block.Instrs[i].RequiresLiveRegData)
                 {
-                    block.Instrs[i].extra = new LiveRegData(allocations.Values.ToList());
+                    block.Instrs[i].extra = new LiveRegData(allRegisters.Where(x => !freeRegisters.Contains(x)).ToList());
                 }
 
                 // then, assign new registers

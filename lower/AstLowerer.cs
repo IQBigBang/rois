@@ -85,7 +85,8 @@ namespace RoisLang.lower
                 case ast.CallExpr callExpr:
                     {
                         var callee = LowerExpr(callExpr.Callee);
-                        return Builder.BuildCall(callee);
+                        var arguments = callExpr.Args.Select(x => LowerExpr(x)).ToArray();
+                        return Builder.BuildCall(callee, arguments);
                     }
                 default:
                     throw new NotImplementedException();
