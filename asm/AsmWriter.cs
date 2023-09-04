@@ -133,11 +133,33 @@ namespace RoisLang.asm
                         // now the call
                         WriteLn("call {addr}", callInstr.Callee);
                         // if there is a result, move it into the correct register
-                        if (!callInstr.Out.IsNull)
+                        if (!callInstr.Out.IsNull && (regs[callInstr.Out] != GpReg.RNull))
                             WriteLn("mov {b64}, rax", callInstr.Out);
                         // restore the registers
                         foreach (var lv in liveRegisters.Reverse<GpReg>())
                             WriteLn("pop {b64}", lv);
+                    }
+                    break;
+                case MidICmpInstr icmpInstr:
+                    {
+                        // if output is unused, don't emit anything
+                        if (regs[icmpInstr.Out] == GpReg.RNull) break;
+                        // ICmp compiles to:
+                        // cmp l, r
+                        // setxx out
+                        WriteLn("cmp {b32}, {b32}", icmpInstr.Lhs, icmpInstr.Rhs);
+                        if (icmpInstr.Op is MidICmpInstr.CmpOp.Eq)
+                            WriteLn("sete {b8}", icmpInstr.Out);
+                        else if (icmpInstr.Op is MidICmpInstr.CmpOp.NEq)
+                            WriteLn("setne {b8}", icmpInstr.Out);
+                        else if (icmpInstr.Op is MidICmpInstr.CmpOp.Lt)
+                            WriteLn("setl {b8}", icmpInstr.Out);
+                        else if (icmpInstr.Op is MidICmpInstr.CmpOp.Le)
+                            WriteLn("setle {b8}", icmpInstr.Out);
+                        else if (icmpInstr.Op is MidICmpInstr.CmpOp.Gt)
+                            WriteLn("setg {b8}", icmpInstr.Out);
+                        else if (icmpInstr.Op is MidICmpInstr.CmpOp.Ge)
+                            WriteLn("setge {b8}", icmpInstr.Out);
                     }
                     break;
                 default:
@@ -252,6 +274,21 @@ namespace RoisLang.asm
                     GpReg.Rdi => "edi",
                     GpReg.Rsi => "esi",
                     GpReg.Rax => "eax",
+                    _ => throw new Exception(),
+                });
+                return;
+            }
+            if (formatSpecifiers.Contains("b8"))
+            {
+                output.Write(gpReg switch
+                {
+                    GpReg.Rcx => "cl",
+                    GpReg.Rdx => "dl",
+                    GpReg.R8 => "r8b",
+                    GpReg.R9 => "r9b",
+                    GpReg.Rdi => "dil",
+                    GpReg.Rsi => "sil",
+                    GpReg.Rax => "al",
                     _ => throw new Exception(),
                 });
                 return;

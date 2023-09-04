@@ -33,32 +33,42 @@ namespace RoisLang.parser
                                               .Value((Expr)new CallExpr(atom, args))
                                 ).OptionalOrDefault(atom));
 
-        private static readonly TokenListParser<Token, Expr> Expr =
+        private static readonly TokenListParser<Token, Expr> AddSubExpr =
             Call.Chain(Superpower.Parsers.Token.EqualTo(Token.Plus).Or(Superpower.Parsers.Token.EqualTo(Token.Minus)), Call,
                 (op, lhs, rhs) => new BinOpExpr(lhs, rhs,
                     op.ToStringValue() == "+" ? BinOpExpr.Ops.Add : op.ToStringValue() == "-" ? BinOpExpr.Ops.Sub : throw new Exception()));
 
-        private static TokenListParser<Token, Expr> GetExpr() { return Expr; }
+        private static readonly TokenListParser<Token, Expr> CmpExpr =
+            AddSubExpr.Then(lhs =>
+                Superpower.Parsers.Token.EqualTo(Token.Equal).IgnoreThen(Lazy(GetExpr)).Select(rhs => (Expr)new BinOpExpr(lhs, rhs, BinOpExpr.Ops.CmpEq))
+                .Or(Superpower.Parsers.Token.EqualTo(Token.NotEqual).IgnoreThen(Lazy(GetExpr)).Select(rhs => (Expr)new BinOpExpr(lhs, rhs, BinOpExpr.Ops.CmpNe)))
+                .Or(Superpower.Parsers.Token.EqualTo(Token.Lower).IgnoreThen(Lazy(GetExpr)).Select(rhs => (Expr)new BinOpExpr(lhs, rhs, BinOpExpr.Ops.CmpLt)))
+                .Or(Superpower.Parsers.Token.EqualTo(Token.LowerEqual).IgnoreThen(Lazy(GetExpr)).Select(rhs => (Expr)new BinOpExpr(lhs, rhs, BinOpExpr.Ops.CmpLe)))
+                .Or(Superpower.Parsers.Token.EqualTo(Token.Greater).IgnoreThen(Lazy(GetExpr)).Select(rhs => (Expr)new BinOpExpr(lhs, rhs, BinOpExpr.Ops.CmpGt)))
+                .Or(Superpower.Parsers.Token.EqualTo(Token.GreaterEqual).IgnoreThen(Lazy(GetExpr)).Select(rhs => (Expr)new BinOpExpr(lhs, rhs, BinOpExpr.Ops.CmpGe)))
+                .OptionalOrDefault(lhs));
+
+        private static TokenListParser<Token, Expr> GetExpr() { return CmpExpr; }
 
         private static readonly TokenListParser<Token, Stmt> LetStmt =
             Superpower.Parsers.Token.EqualTo(Token.KwLet)
             .IgnoreThen(Superpower.Parsers.Token.EqualTo(Token.Sym))
             .Select(s => s.ToStringValue().Trim())
             .Then(varName => Superpower.Parsers.Token.EqualTo(Token.Assign)
-                            .IgnoreThen(Expr)
+                            .IgnoreThen(GetExpr())
                             .Select(varValue => (Stmt)new LetAssignStmt(varName, varValue)));
 
         private static readonly TokenListParser<Token, Stmt> AssignOrDiscardStmt =
-            Expr.Then(leftExpr =>
+            GetExpr().Then(leftExpr =>
                 Superpower.Parsers.Token.EqualTo(Token.Assign)
-                .IgnoreThen(Expr)
+                .IgnoreThen(GetExpr())
                 .Select(rightExpr => (Stmt)new AssignStmt(leftExpr, rightExpr))
                 .OptionalOrDefault((Stmt)new DiscardStmt(leftExpr))
             );
 
         private static readonly TokenListParser<Token, Stmt> ReturnStmt =
             Superpower.Parsers.Token.EqualTo(Token.KwReturn)
-            .IgnoreThen(Expr)
+            .IgnoreThen(GetExpr())
             .Select(expr => (Stmt)new ReturnStmt(expr));
 
         private static readonly TokenListParser<Token, Stmt> ParseStmt =
@@ -103,8 +113,11 @@ namespace RoisLang.parser
             );
 
         private static readonly TokenListParser<Token, ast.Program> ParseProgram =
+            Superpower.Parsers.Token.EqualTo(Token.Nl).Optional()
+            .IgnoreThen(
             ParseFuncDef.Then(func => Superpower.Parsers.Token.EqualTo(Token.Nl).Optional().Value(func))
-            .Many().Select(x => new ast.Program(x));
+            .Many().Select(x => new ast.Program(x))
+            );
 
         public static ast.Program LexAndParse(string s)
         {

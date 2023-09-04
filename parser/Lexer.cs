@@ -35,6 +35,18 @@ namespace RoisLang.parser
         Minus,
         // ->
         Arrow,
+        // ==
+        Equal,
+        // !=
+        NotEqual,
+        // <
+        Lower,
+        // <=
+        LowerEqual,
+        // >
+        Greater,
+        // >=
+        GreaterEqual,
         // the 'let' keyword
         KwLet,
         // the 'def' keyword
@@ -83,7 +95,14 @@ namespace RoisLang.parser
                     LexNl();
                 // operators
                 else if (ch == '=')
-                    tokens.Add(SimpleToken(Token.Assign, 1));
+                {
+                    if (Pos + 1 < Source.Length && Source[Pos + 1] == '=')
+                        tokens.Add(SimpleToken(Token.Equal, 2));
+                    else
+                        tokens.Add(SimpleToken(Token.Assign, 1));
+                }
+                else if (ch == '!' && Pos + 1 < Source.Length && Source[Pos + 1] == '=')
+                    tokens.Add(SimpleToken(Token.NotEqual, 2));
                 else if (ch == '(')
                     tokens.Add(SimpleToken(Token.LParen, 1));
                 else if (ch == ')')
@@ -100,6 +119,20 @@ namespace RoisLang.parser
                         tokens.Add(SimpleToken(Token.Arrow, 2));
                     else
                         tokens.Add(SimpleToken(Token.Minus, 1));
+                }
+                else if (ch == '<')
+                {
+                    if (Pos + 1 < Source.Length && Source[Pos + 1] == '=')
+                        tokens.Add(SimpleToken(Token.LowerEqual, 2));
+                    else
+                        tokens.Add(SimpleToken(Token.Lower, 1));
+                }
+                else if (ch == '>')
+                {
+                    if (Pos + 1 < Source.Length && Source[Pos + 1] == '=')
+                        tokens.Add(SimpleToken(Token.GreaterEqual, 2));
+                    else
+                        tokens.Add(SimpleToken(Token.Greater, 1));
                 }
                 // symbols and numbers
                 else if (char.IsDigit(ch))

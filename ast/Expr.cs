@@ -33,7 +33,13 @@ namespace RoisLang.ast
         public enum Ops
         {
             Add,
-            Sub
+            Sub,
+            CmpEq,
+            CmpNe,
+            CmpLt,
+            CmpGt,
+            CmpLe,
+            CmpGe,
         }
         public override bool IsValidLhs() => false;
     }

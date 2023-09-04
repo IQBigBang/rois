@@ -109,6 +109,13 @@ namespace RoisLang.types
                             if (!lhs.IsInt || !rhs.IsInt)
                                 throw new Exception("Typechecking error");
                             expr.Ty = TypeRef.INT;
+                        } else if (binOpExpr.Op is BinOpExpr.Ops.CmpEq or BinOpExpr.Ops.CmpNe or
+                                   BinOpExpr.Ops.CmpLt or BinOpExpr.Ops.CmpLe or
+                                   BinOpExpr.Ops.CmpGt or BinOpExpr.Ops.CmpGe)
+                        {
+                            if (!lhs.IsInt || !rhs.IsInt)
+                                throw new Exception("Typechecking error");
+                            expr.Ty = TypeRef.BOOL;
                         }
                         break;
                     }

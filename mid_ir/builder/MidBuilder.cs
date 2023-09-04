@@ -54,5 +54,13 @@ namespace RoisLang.mid_ir.builder
             var instr = new MidCallInstr { Out = MidValue.Null(), Callee = callee, Arguments = args };
             return currentBlock!.AddInstr(instr);
         }
+
+        public MidValue BuildICmp(MidValue lhs, MidValue rhs, MidICmpInstr.CmpOp op)
+        {
+            lhs.AssertType(TypeRef.INT);
+            rhs.AssertType(TypeRef.INT);
+            var instr = new MidICmpInstr { Out = MidValue.Null(), Lhs = lhs, Rhs = rhs, Op = op };
+            return currentBlock!.AddInstr(instr);
+        }
     }
 }

@@ -75,13 +75,22 @@ namespace RoisLang.lower
                     {
                         var lhs = LowerExpr(binOpExpr.Lhs);
                         var rhs = LowerExpr(binOpExpr.Rhs);
-                        if (binOpExpr.Op == BinOpExpr.Ops.Add)
-                        {
+                        if (binOpExpr.Op is BinOpExpr.Ops.Add)
                             return Builder.BuildIAdd(lhs, rhs);
-                        } else if (binOpExpr.Op == BinOpExpr.Ops.Sub)
-                        {
+                        else if (binOpExpr.Op is BinOpExpr.Ops.Sub)
                             return Builder.BuildISub(lhs, rhs);
-                        }
+                        else if (binOpExpr.Op is BinOpExpr.Ops.CmpEq)
+                            return Builder.BuildICmp(lhs, rhs, MidICmpInstr.CmpOp.Eq);
+                        else if (binOpExpr.Op is BinOpExpr.Ops.CmpNe)
+                            return Builder.BuildICmp(lhs, rhs, MidICmpInstr.CmpOp.NEq);
+                        else if (binOpExpr.Op is BinOpExpr.Ops.CmpLt)
+                            return Builder.BuildICmp(lhs, rhs, MidICmpInstr.CmpOp.Lt);
+                        else if (binOpExpr.Op is BinOpExpr.Ops.CmpLe)
+                            return Builder.BuildICmp(lhs, rhs, MidICmpInstr.CmpOp.Le);
+                        else if (binOpExpr.Op is BinOpExpr.Ops.CmpGt)
+                            return Builder.BuildICmp(lhs, rhs, MidICmpInstr.CmpOp.Gt);
+                        else if (binOpExpr.Op is BinOpExpr.Ops.CmpGe)
+                            return Builder.BuildICmp(lhs, rhs, MidICmpInstr.CmpOp.Ge);
                         else throw new NotImplementedException();
                     }
                 case ast.CallExpr callExpr:
