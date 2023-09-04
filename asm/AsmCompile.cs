@@ -11,6 +11,11 @@ namespace RoisLang.asm
     {
         public static void CompileAllFuncs(TextWriter output, IEnumerable<MidFunc> funcs)
         {
+            output.WriteLine("\tdefault rel");
+            foreach (var func in funcs)
+                output.WriteLine($"global {func.Name}");
+            output.WriteLine("section .text");
+            output.WriteLine();
             foreach (var func in funcs)
             {
                 CompileFunc(output, func);
@@ -23,6 +28,7 @@ namespace RoisLang.asm
             output.WriteLine($"{func.Name}:");
             foreach (var block in func.Blocks)
                 CompileBlock(output, func.Name, block);
+            output.Flush();
         }
 
         private static void CompileBlock(TextWriter output, string fname, MidBlock block)
