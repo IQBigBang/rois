@@ -34,6 +34,7 @@ namespace RoisLang.ast
         {
             Add,
             Sub,
+            Mul,
             CmpEq,
             CmpNe,
             CmpLt,

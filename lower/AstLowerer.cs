@@ -79,6 +79,8 @@ namespace RoisLang.lower
                             return Builder.BuildIAdd(lhs, rhs);
                         else if (binOpExpr.Op is BinOpExpr.Ops.Sub)
                             return Builder.BuildISub(lhs, rhs);
+                        else if (binOpExpr.Op is BinOpExpr.Ops.Mul)
+                            return Builder.BuildIMul(lhs, rhs);
                         else if (binOpExpr.Op is BinOpExpr.Ops.CmpEq)
                             return Builder.BuildICmp(lhs, rhs, MidICmpInstr.CmpOp.Eq);
                         else if (binOpExpr.Op is BinOpExpr.Ops.CmpNe)

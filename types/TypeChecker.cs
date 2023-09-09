@@ -104,7 +104,7 @@ namespace RoisLang.types
                     {
                         var lhs = TypeckExpr(binOpExpr.Lhs);
                         var rhs = TypeckExpr(binOpExpr.Rhs);
-                        if (binOpExpr.Op == BinOpExpr.Ops.Add || binOpExpr.Op == BinOpExpr.Ops.Sub)
+                        if (binOpExpr.Op is BinOpExpr.Ops.Add or BinOpExpr.Ops.Sub or BinOpExpr.Ops.Mul)
                         {
                             if (!lhs.IsInt || !rhs.IsInt)
                                 throw new Exception("Typechecking error");

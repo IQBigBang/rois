@@ -113,6 +113,39 @@ namespace RoisLang.asm
                         WriteLn("sub {b32}, {b32}", iSubInstr.Out, iSubInstr.Rhs);
                     }
                     break;
+                case MidIMulInstr iMulInstr:
+                    {
+                        // IAdd is side-effect free, if its result is unused, it can be skipped
+                        if (regs[iMulInstr.Out] == GpReg.RNull) break;
+                        // if one of the operands is an integer value, use the special form of the `imul` instruction
+                        if (iMulInstr.Lhs.IsConstInt || iMulInstr.Rhs.IsConstInt)
+                        {
+                            var intValue = iMulInstr.Lhs.IsConstInt ? iMulInstr.Lhs.GetIntValue() : iMulInstr.Rhs.GetIntValue();
+                            var regValue = iMulInstr.Lhs.IsReg ? iMulInstr.Lhs : iMulInstr.Rhs;
+                            // imul out, reg, imm
+                            WriteLn("imul {b32}, {b32}, {b32}", iMulInstr.Out, regValue, intValue.ToString());
+                        } else
+                        {
+                            // both are registers -> do the same thing as with addition
+                            // mov out, lhs; imul out, rhs
+                            if (iMulInstr.Rhs.IsReg && regs[iMulInstr.Rhs] == regs[iMulInstr.Out])
+                            {
+                                // out==rhs => imul out, lhs (addition is commutative)
+                                WriteLn("imul {b32}, {b32}", iMulInstr.Out, iMulInstr.Lhs);
+                                break;
+                            }
+                            // optimization, if out==lhs, the first mov is useless
+                            if (iMulInstr.Lhs.IsReg && regs[iMulInstr.Lhs] == regs[iMulInstr.Out]) { }
+                            else
+                            {
+                                // mov out, lhs
+                                WriteLn("mov {b32}, {b32}", iMulInstr.Out, iMulInstr.Lhs);
+                            }
+                            // imul out, rhs
+                            WriteLn("imul {b32}, {b32}", iMulInstr.Out, iMulInstr.Rhs);
+                        }
+                    }
+                    break;
                 case MidRetInstr retInstr:
                     {
                         if (!retInstr.Value.IsNull)

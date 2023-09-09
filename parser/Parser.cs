@@ -33,8 +33,12 @@ namespace RoisLang.parser
                                               .Value((Expr)new CallExpr(atom, args))
                                 ).OptionalOrDefault(atom));
 
+        private static readonly TokenListParser<Token, Expr> Factor =
+            Call.Chain(Superpower.Parsers.Token.EqualTo(Token.Star), Call,
+                (_, lhs, rhs) => new BinOpExpr(lhs, rhs, BinOpExpr.Ops.Mul));
+
         private static readonly TokenListParser<Token, Expr> AddSubExpr =
-            Call.Chain(Superpower.Parsers.Token.EqualTo(Token.Plus).Or(Superpower.Parsers.Token.EqualTo(Token.Minus)), Call,
+            Factor.Chain(Superpower.Parsers.Token.EqualTo(Token.Plus).Or(Superpower.Parsers.Token.EqualTo(Token.Minus)), Factor,
                 (op, lhs, rhs) => new BinOpExpr(lhs, rhs,
                     op.ToStringValue() == "+" ? BinOpExpr.Ops.Add : op.ToStringValue() == "-" ? BinOpExpr.Ops.Sub : throw new Exception()));
 

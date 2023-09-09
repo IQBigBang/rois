@@ -31,6 +31,8 @@ namespace RoisLang.parser
         Colon,
         // +
         Plus,
+        // *
+        Star,
         // -
         Minus,
         // ->
@@ -113,6 +115,8 @@ namespace RoisLang.parser
                     tokens.Add(SimpleToken(Token.Comma, 1));
                 else if (ch == '+')
                     tokens.Add(SimpleToken(Token.Plus, 1));
+                else if (ch == '*')
+                    tokens.Add(SimpleToken(Token.Star, 1));
                 else if (ch == '-')
                 {
                     if (Pos + 1 < Source.Length && Source[Pos + 1] == '>')

@@ -42,6 +42,14 @@ namespace RoisLang.mid_ir.builder
             return currentBlock!.AddInstr(instr);
         }
 
+        public MidValue BuildIMul(MidValue lhs, MidValue rhs)
+        {
+            lhs.AssertType(TypeRef.INT);
+            rhs.AssertType(TypeRef.INT);
+            var instr = new MidIMulInstr { Out = MidValue.Null(), Lhs = lhs, Rhs = rhs };
+            return currentBlock!.AddInstr(instr);
+        }
+
         public MidValue BuildRet() => BuildRet(MidValue.Null());
         public MidValue BuildRet(MidValue val)
         {
