@@ -40,7 +40,7 @@ namespace RoisLang.types
             Ret = f.Ret;
             foreach (var (argName, argTy) in f.Arguments)
             {
-                Locals.Add(argName, argTy); // TODO
+                Locals.Add(argName, argTy);
             }
             foreach (var stmt in f.Body)
             {

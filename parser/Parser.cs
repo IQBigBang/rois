@@ -78,9 +78,9 @@ namespace RoisLang.parser
         private static readonly TokenListParser<Token, Stmt> ParseStmt =
             LetStmt.Or(ReturnStmt).Or(AssignOrDiscardStmt);
 
-        private static TokenListParser<Token, Stmt[]> ParseStmts =
-            ParseStmt.Then(stmt => Superpower.Parsers.Token.EqualTo(Token.Nl).Value(stmt)).Many();
-        //ParseStmt.ManyDelimitedBy(Superpower.Parsers.Token.EqualTo(Token.Nl)/*, Superpower.Parsers.Token.EqualTo(Token.Nl).OptionalOrDefault()*/);
+        private static readonly TokenListParser<Token, Stmt[]> Block =
+            ParseStmt.Then(stmt => Superpower.Parsers.Token.EqualTo(Token.Nl).Value(stmt)).Many()
+                .Between(Superpower.Parsers.Token.EqualTo(Token.Indent), Superpower.Parsers.Token.EqualTo(Token.Dedent));
 
         private static readonly TokenListParser<Token, (string, TypeRef)[]> FuncDefArgs =
             Superpower.Parsers.Token.EqualTo(Token.Sym)
@@ -106,15 +106,11 @@ namespace RoisLang.parser
                     .Then(retType => 
                          Superpower.Parsers.Token.EqualTo(Token.Colon)
                         .IgnoreThen(Superpower.Parsers.Token.EqualTo(Token.Nl))
-                        .IgnoreThen(Superpower.Parsers.Token.EqualTo(Token.Indent))
-                        .IgnoreThen(ParseStmts)
-                        .Then(body =>
-                            Superpower.Parsers.Token.EqualTo(Token.Dedent)
-                            .Value(new Func(funcName.ToStringValue(), funcArgs, body, retType))
+                        .IgnoreThen(Block)
+                        .Select(body => new Func(funcName.ToStringValue(), funcArgs, body, retType))
                         )
                     )
-               )
-            );
+               );
 
         private static readonly TokenListParser<Token, ast.Program> ParseProgram =
             Superpower.Parsers.Token.EqualTo(Token.Nl).Optional()

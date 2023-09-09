@@ -62,21 +62,43 @@ namespace RoisLang.parser
     public class Lexer
     {
         private string Source;
+        private List<int> Newlines = new List<int>();
         private int Pos = 0;
         private List<Superpower.Model.Token<Token>> tokens = new List<Superpower.Model.Token<Token>>();
         private int currentIndent = 0;
 
         public static List<Superpower.Model.Token<Token>> TokenizeString(string s)
         {
-            Lexer l = new Lexer { Source = s };
+            Lexer l = new() { Source = s };
+            l.GenerateNewlinePositions();
             l.LexAll();
             return l.tokens;
         }
 
+        private void GenerateNewlinePositions()
+        {
+            for (int i = 0; i < Source.Length - 1; i++)
+            {
+                if (Source[i] == '\n')
+                {
+                    if (Source[i + 1] == '\r') i++;
+                    Newlines.Add(i);
+                }
+            }
+        }
+
         private Superpower.Model.TextSpan Span(int length)
         {
-            // TODO: line and column
-            return new Superpower.Model.TextSpan(Source, new Superpower.Model.Position(Pos, 0, 0), length);
+            // find where the current line starts
+            int lineNum = 0;
+            for (;lineNum < Newlines.Count; lineNum++)
+            {
+                if (Newlines[lineNum] > Pos)
+                    break;
+            }
+            var lineStart = lineNum == 0 ? 0 : Newlines[lineNum - 1];
+            var col = Pos - lineStart;
+            return new Superpower.Model.TextSpan(Source, new Superpower.Model.Position(Pos, lineNum+1, col), length);
         }
 
         private Superpower.Model.Token<Token> SimpleToken(Token type, int length)
