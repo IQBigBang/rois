@@ -1,4 +1,5 @@
 ﻿using RoisLang.ast;
+using RoisLang.utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,25 +10,23 @@ namespace RoisLang.types
 {
     public class TypeChecker
     {
-        private Dictionary<string, TypeRef> Globals;
-        private Dictionary<string, TypeRef> Locals;
+        private ScopedDictionary<string, TypeRef> Symbols;
         private TypeRef? Ret;
 
         public TypeChecker()
         {
-            Globals = new Dictionary<string, TypeRef>();
-            Locals = new Dictionary<string, TypeRef>();
+            Symbols = new ScopedDictionary<string, TypeRef>();
             Ret = null;
         }
 
         public void TypeckProgram(ast.Program program)
         {
-            Globals.Clear();
+            Symbols.Reset();
             foreach (var func in program.Functions)
             {
                 var ftype = FuncType.New(func.Arguments.Select(x => x.Item2).ToList(), func.Ret);
-                if (Globals.ContainsKey(func.Name)) throw new Exception();
-                Globals[func.Name] = ftype;
+                if (Symbols.Contains(func.Name)) throw new Exception();
+                Symbols.Add(func.Name, ftype);
             }
             // type-check all functions
             foreach (var func in program.Functions)
@@ -36,11 +35,11 @@ namespace RoisLang.types
 
         private void TypeckFunc(Func f)
         {
-            Locals.Clear();
+            using var _ = Symbols.EnterNewScope();
             Ret = f.Ret;
             foreach (var (argName, argTy) in f.Arguments)
             {
-                Locals.Add(argName, argTy);
+                Symbols.Add(argName, argTy);
             }
             foreach (var stmt in f.Body)
             {
@@ -60,7 +59,7 @@ namespace RoisLang.types
                 case ast.LetAssignStmt letAssignStmt:
                     {
                         var value = TypeckExpr(letAssignStmt.Value);
-                        Locals[letAssignStmt.VarName] = value;
+                        Symbols.Add(letAssignStmt.VarName, value);
                         return;
                     }
                 case ast.AssignStmt assignStmt:
@@ -76,6 +75,18 @@ namespace RoisLang.types
                         var typ = TypeckExpr(returnStmt.Value);
                         if (!typ.Equal(Ret!))
                             throw new Exception("Typechecking error");
+                        return;
+                    }
+                case IfStmt ifStmt:
+                    {
+                        var cond = TypeckExpr(ifStmt.Cond);
+                        if (!cond.IsBool) throw new Exception("Typechecking error");
+                        // the if-statement body is a new scope
+                        using (var _ = Symbols.EnterNewScope())
+                        {
+                            foreach (var thenStmt in ifStmt.Then)
+                                TypeckStmt(thenStmt);
+                        }
                         return;
                     }
                 default:
@@ -94,10 +105,8 @@ namespace RoisLang.types
                     expr.Ty = TypeRef.BOOL;
                     break;
                 case ast.VarExpr varExpr:
-                    if (Locals.ContainsKey(varExpr.Name))
-                        expr.Ty = Locals[varExpr.Name];
-                    else if (Globals.ContainsKey(varExpr.Name))
-                        expr.Ty = Globals[varExpr.Name];
+                    if (Symbols.Contains(varExpr.Name))
+                        expr.Ty = Symbols[varExpr.Name];
                     else throw new Exception();
                     break;
                 case ast.BinOpExpr binOpExpr:

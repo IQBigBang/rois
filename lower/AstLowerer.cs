@@ -2,6 +2,7 @@
 using RoisLang.mid_ir;
 using RoisLang.mid_ir.builder;
 using RoisLang.types;
+using RoisLang.utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,26 +14,25 @@ namespace RoisLang.lower
     public class AstLowerer
     {
         private MidBuilder Builder;
-        private Dictionary<string, MidValue> Locals;
-        private Dictionary<string, MidValue> Globals;
+        private ScopedDictionary<string, MidValue> Symbols;
 
         public AstLowerer()
         {
             Builder = new MidBuilder();
-            Locals = new Dictionary<string, MidValue>();
-            Globals = new Dictionary<string, MidValue>();
+            Symbols = new ScopedDictionary<string, MidValue>();
         }
 
         public List<MidFunc> LowerProgram(ast.Program program)
         {
+            Symbols.Reset();
             List<MidFunc> midFuncs = new();
             foreach (var func in program.Functions)
             {
-                if (Globals.ContainsKey(func.Name)) throw new Exception();
+                if (Symbols.Contains(func.Name)) throw new Exception();
                 var midFunc = new MidFunc(func.Name, func.Arguments.Select(x => x.Item2).ToList(), func.Ret);
                 midFuncs.Add(midFunc);
                 var value = MidValue.Global(midFunc, Assertion.X);
-                Globals.Add(func.Name, value);
+                Symbols.Add(func.Name, value);
             }
             for (int i = 0; i < program.Functions.Length; i++)
                 LowerFunc(program.Functions[i], midFuncs[i]);
@@ -42,11 +42,11 @@ namespace RoisLang.lower
         private void LowerFunc(Func f, MidFunc target)
         {
             Builder.SwitchBlock(target.EntryBlock);
-            Locals = new Dictionary<string, MidValue>();
+            using var _ = Symbols.EnterNewScope();
             // add arguments
             for (int i = 0; i < f.Arguments.Length; i++)
             {
-                Locals.Add(f.Arguments[i].Item1, target.EntryBlock.Argument(i));
+                Symbols.Add(f.Arguments[i].Item1, target.EntryBlock.Argument(i));
             }
             // compile the body
             foreach (var stmt in f.Body)
@@ -66,10 +66,8 @@ namespace RoisLang.lower
                 case ast.BoolLit boolExpr:
                     return MidValue.ConstBool(boolExpr.Value);
                 case ast.VarExpr varExpr:
-                    if (Locals.ContainsKey(varExpr.Name))
-                        return Locals[varExpr.Name];
-                    else if (Globals.ContainsKey(varExpr.Name))
-                        return Globals[varExpr.Name];
+                    if (Symbols.Contains(varExpr.Name))
+                        return Symbols[varExpr.Name];
                     else throw new Exception();
                 case ast.BinOpExpr binOpExpr:
                     {
@@ -116,7 +114,7 @@ namespace RoisLang.lower
                 case ast.LetAssignStmt letAssignStmt:
                     {
                         var value = LowerExpr(letAssignStmt.Value);
-                        Locals[letAssignStmt.VarName] = value;
+                        Symbols.Add(letAssignStmt.VarName, value);
                         return;
                     }
                 case ast.AssignStmt assignStmt:
@@ -124,7 +122,7 @@ namespace RoisLang.lower
                         var value = LowerExpr(assignStmt.Value);
                         if (assignStmt.Lhs is ast.VarExpr varExpr)
                         {
-                            Locals[varExpr.Name] = value;
+                            Symbols.Add(varExpr.Name, value);
                         }
                         else throw new Exception();
                         return;
@@ -134,6 +132,10 @@ namespace RoisLang.lower
                         var value = LowerExpr(returnStmt.Value);
                         Builder.BuildRet(value);
                         return;
+                    }
+                case ast.IfStmt ifStmt:
+                    {
+                       throw new NotImplementedException(); 
                     }
                 default:
                     throw new NotImplementedException();

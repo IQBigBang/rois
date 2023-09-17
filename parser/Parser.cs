@@ -60,7 +60,8 @@ namespace RoisLang.parser
             .Select(s => s.ToStringValue().Trim())
             .Then(varName => Superpower.Parsers.Token.EqualTo(Token.Assign)
                             .IgnoreThen(GetExpr())
-                            .Select(varValue => (Stmt)new LetAssignStmt(varName, varValue)));
+                            .Select(varValue => (Stmt)new LetAssignStmt(varName, varValue)))
+            .Then(expr => Superpower.Parsers.Token.EqualTo(Token.Nl).Value(expr));
 
         private static readonly TokenListParser<Token, Stmt> AssignOrDiscardStmt =
             GetExpr().Then(leftExpr =>
@@ -68,19 +69,29 @@ namespace RoisLang.parser
                 .IgnoreThen(GetExpr())
                 .Select(rightExpr => (Stmt)new AssignStmt(leftExpr, rightExpr))
                 .OptionalOrDefault((Stmt)new DiscardStmt(leftExpr))
-            );
+            )
+            .Then(expr => Superpower.Parsers.Token.EqualTo(Token.Nl).Value(expr));
 
         private static readonly TokenListParser<Token, Stmt> ReturnStmt =
             Superpower.Parsers.Token.EqualTo(Token.KwReturn)
             .IgnoreThen(GetExpr())
-            .Select(expr => (Stmt)new ReturnStmt(expr));
+            .Select(expr => (Stmt)new ReturnStmt(expr))
+            .Then(expr => Superpower.Parsers.Token.EqualTo(Token.Nl).Value(expr));
+
+        private static readonly TokenListParser<Token, Stmt> IfStmt =
+            Superpower.Parsers.Token.EqualTo(Token.KwIf)
+            .IgnoreThen(GetExpr())
+            .Then(cond => Superpower.Parsers.Token.Sequence(Token.Colon, Token.Nl)
+                          .IgnoreThen(GetBlock())
+                          .Select(block => (Stmt)new IfStmt(cond, block)));
 
         private static readonly TokenListParser<Token, Stmt> ParseStmt =
-            LetStmt.Or(ReturnStmt).Or(AssignOrDiscardStmt);
+            LetStmt.Or(ReturnStmt).Or(IfStmt).Or(AssignOrDiscardStmt);
 
         private static readonly TokenListParser<Token, Stmt[]> Block =
-            ParseStmt.Then(stmt => Superpower.Parsers.Token.EqualTo(Token.Nl).Value(stmt)).Many()
-                .Between(Superpower.Parsers.Token.EqualTo(Token.Indent), Superpower.Parsers.Token.EqualTo(Token.Dedent));
+            ParseStmt.Many().Between(Superpower.Parsers.Token.EqualTo(Token.Indent), Superpower.Parsers.Token.EqualTo(Token.Dedent));
+
+        private static TokenListParser<Token, Stmt[]> GetBlock() { return Block; }
 
         private static readonly TokenListParser<Token, (string, TypeRef)[]> FuncDefArgs =
             Superpower.Parsers.Token.EqualTo(Token.Sym)
