@@ -26,7 +26,7 @@ namespace RoisLang.types
             {
                 var ftype = FuncType.New(func.Arguments.Select(x => x.Item2).ToList(), func.Ret);
                 if (Symbols.Contains(func.Name)) throw new Exception();
-                Symbols.Add(func.Name, ftype);
+                Symbols.AddNew(func.Name, ftype);
             }
             // type-check all functions
             foreach (var func in program.Functions)
@@ -39,7 +39,7 @@ namespace RoisLang.types
             Ret = f.Ret;
             foreach (var (argName, argTy) in f.Arguments)
             {
-                Symbols.Add(argName, argTy);
+                Symbols.AddNew(argName, argTy);
             }
             foreach (var stmt in f.Body)
             {
@@ -59,7 +59,7 @@ namespace RoisLang.types
                 case ast.LetAssignStmt letAssignStmt:
                     {
                         var value = TypeckExpr(letAssignStmt.Value);
-                        Symbols.Add(letAssignStmt.VarName, value);
+                        Symbols.AddNew(letAssignStmt.VarName, value);
                         return;
                     }
                 case ast.AssignStmt assignStmt:

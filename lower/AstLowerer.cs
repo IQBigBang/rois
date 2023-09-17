@@ -13,6 +13,7 @@ namespace RoisLang.lower
 {
     public class AstLowerer
     {
+        private MidFunc? currentFunc;
         private MidBuilder Builder;
         private ScopedDictionary<string, MidValue> Symbols;
 
@@ -32,7 +33,7 @@ namespace RoisLang.lower
                 var midFunc = new MidFunc(func.Name, func.Arguments.Select(x => x.Item2).ToList(), func.Ret);
                 midFuncs.Add(midFunc);
                 var value = MidValue.Global(midFunc, Assertion.X);
-                Symbols.Add(func.Name, value);
+                Symbols.AddNew(func.Name, value);
             }
             for (int i = 0; i < program.Functions.Length; i++)
                 LowerFunc(program.Functions[i], midFuncs[i]);
@@ -41,12 +42,13 @@ namespace RoisLang.lower
 
         private void LowerFunc(Func f, MidFunc target)
         {
+            currentFunc = target;
             Builder.SwitchBlock(target.EntryBlock);
             using var _ = Symbols.EnterNewScope();
             // add arguments
             for (int i = 0; i < f.Arguments.Length; i++)
             {
-                Symbols.Add(f.Arguments[i].Item1, target.EntryBlock.Argument(i));
+                Symbols.AddNew(f.Arguments[i].Item1, target.EntryBlock.Argument(i));
             }
             // compile the body
             foreach (var stmt in f.Body)
@@ -114,7 +116,7 @@ namespace RoisLang.lower
                 case ast.LetAssignStmt letAssignStmt:
                     {
                         var value = LowerExpr(letAssignStmt.Value);
-                        Symbols.Add(letAssignStmt.VarName, value);
+                        Symbols.AddNew(letAssignStmt.VarName, value);
                         return;
                     }
                 case ast.AssignStmt assignStmt:
@@ -122,7 +124,7 @@ namespace RoisLang.lower
                         var value = LowerExpr(assignStmt.Value);
                         if (assignStmt.Lhs is ast.VarExpr varExpr)
                         {
-                            Symbols.Add(varExpr.Name, value);
+                            Symbols.Set(varExpr.Name, value);
                         }
                         else throw new Exception();
                         return;
@@ -135,10 +137,58 @@ namespace RoisLang.lower
                     }
                 case ast.IfStmt ifStmt:
                     {
-                       throw new NotImplementedException(); 
+                        var cond = LowerExpr(ifStmt.Cond);
+                        // collect all locals, because we have to pass them as arguments to the `if` and `else` blocks
+                        var allLocals = GetAllLocals();
+                        var typesList = allLocals.Select(x => x.Value.GetType()).ToList();
+                        var ifBlock = currentFunc!.NewBlock(typesList);
+                        var continueBlock = currentFunc.NewBlock(typesList);
+                        // take the values of `allLocals` and pass them to the blocks
+                        var allLocalsValues = allLocals.Select(x => x.Value).ToArray();
+                        var allLocalsNames = allLocals.Select(x => x.Key).ToList();
+                        var branchInstr = Builder.BuildBranch(cond, ifBlock, allLocalsValues, continueBlock, allLocalsValues);
+                        // now switch to the `if` block
+                        // all the locals are now arguments to the ifBlock which means different `MidValue`s
+                        // we call this a "context switch"
+                        using (var _ = Symbols.EnterNewScope())
+                        {
+                            DoContextSwitch(allLocalsNames, ifBlock);
+                            Builder.SwitchBlock(ifBlock);
+                            // now compile the `if` body
+                            foreach (var stmt1 in ifStmt.Then)
+                            {
+                                LowerStmt(stmt1);
+                            }
+                            // switch from `if` to `continue`
+                            Builder.BuildGoto(continueBlock, allLocalsNames.Select(name => Symbols[name]).ToArray());
+                        }
+                        // now we switch to the `continue` block
+                        // instead of establishing a new scope, we wipe out the current one
+                        Symbols.ClearCurrentScope();
+                        DoContextSwitch(allLocalsNames, continueBlock);
+                        Builder.SwitchBlock(continueBlock);
+                        // compilation of the rest can resume business-as-usual
+                        return; 
                     }
                 default:
                     throw new NotImplementedException();
+            }
+        }
+
+        private List<KeyValuePair<string, MidValue>> GetAllLocals() => Symbols.Flatten(1).ToList();
+
+        /// <summary>
+        /// This binds all block arguments to names.
+        /// </summary>
+        /// <param name="Names"></param>
+        /// <param name="block"></param>
+        private void DoContextSwitch(IEnumerable<string> Names, MidBlock block)
+        {
+            int i = 0;
+            foreach (var name in Names)
+            {
+                Symbols.AddNew(name, block.Argument(i));
+                i++;
             }
         }
     }

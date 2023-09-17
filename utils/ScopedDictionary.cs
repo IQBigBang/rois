@@ -43,9 +43,24 @@ namespace RoisLang.utils
 
         public Dictionary<K, V> GlobalScope => _list[0];
 
-        public void Add(K key, V value)
+        public void AddNew(K key, V value)
         {
+            if (_list.Last().ContainsKey(key)) throw new Exception("Double definiton at same scope");
             _list.Last()[key] = value;
+        }
+
+        public void Set(K key, V value)
+        {
+            for (int i = _list.Count - 1; i >= 0; i--)
+            {
+                if (_list[i].ContainsKey(key))
+                {
+                    if (i == 0) Console.WriteLine("warning: ScopedDictionary.set at scope=0 (global)");
+                    _list[i][key] = value;
+                    return;
+                }
+            }
+            throw new Exception("Symbol not found");
         }
 
         public V Get(K key)
@@ -86,5 +101,30 @@ namespace RoisLang.utils
         }
 
         public V this[K key] => Get(key);
+
+        public void ClearCurrentScope()
+        {
+            _list[_list.Count - 1] = new Dictionary<K, V>();
+        }
+
+        /// <summary>
+        /// Convert this ScopedDictionary into an ordinary Dictionary, given
+        /// how it looks at the current scope
+        /// </summary>
+        /// <param name="startScope"></param>
+        /// <returns></returns>
+        public Dictionary<K, V> Flatten(int skipScopes = 0)
+        {
+            Dictionary<K, V> output = new();
+            for (int i = _list.Count - 1; i >= skipScopes; i--)
+            {
+                foreach (var kvp in _list[i])
+                {
+                    if (output.ContainsKey(kvp.Key)) continue;
+                    output[kvp.Key] = kvp.Value;
+                }
+            }
+            return output;
+        }
     }
 }

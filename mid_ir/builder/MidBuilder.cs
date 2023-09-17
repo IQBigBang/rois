@@ -50,11 +50,11 @@ namespace RoisLang.mid_ir.builder
             return currentBlock!.AddInstr(instr);
         }
 
-        public MidValue BuildRet() => BuildRet(MidValue.Null());
-        public MidValue BuildRet(MidValue val)
+        public void BuildRet() => BuildRet(MidValue.Null());
+        public void BuildRet(MidValue val)
         {
             var instr = new mid_ir.MidRetInstr { Value = val };
-            return currentBlock!.AddInstr(instr);
+            currentBlock!.AddInstr(instr);
         }
 
         public MidValue BuildCall(MidValue callee, MidValue[] args)
@@ -69,6 +69,21 @@ namespace RoisLang.mid_ir.builder
             rhs.AssertType(TypeRef.INT);
             var instr = new MidICmpInstr { Out = MidValue.Null(), Lhs = lhs, Rhs = rhs, Op = op };
             return currentBlock!.AddInstr(instr);
+        }
+
+        public void BuildGoto(MidBlock targetBlock, MidValue[] args)
+        {
+            var instr = new MidGotoInstr { TargetBlockId = targetBlock.BlockId, Arguments = args };
+            currentBlock!.AddInstr(instr);
+        }
+
+        public MidBranchInstr BuildBranch(MidValue condition, MidBlock thenTargetBlock, MidValue[] thenArgs, MidBlock elseTargetBlock, MidValue[] elseArgs)
+        {
+            var thenGoto = new MidGotoInstr { TargetBlockId = thenTargetBlock.BlockId, Arguments = thenArgs };
+            var elseGoto = new MidGotoInstr { TargetBlockId = elseTargetBlock.BlockId, Arguments = elseArgs };
+            var instr = new MidBranchInstr { Cond = condition, Then = thenGoto, Else = elseGoto };
+            currentBlock!.AddInstr(instr);
+            return instr;
         }
     }
 }

@@ -24,14 +24,25 @@ namespace RoisLang.mid_ir
 
         public MidBlock(uint blockId, List<TypeRef>? argumentTypes_ = null)
         {
-            var argumentTypes = argumentTypes_ ?? new List<TypeRef>();
-            this.arguments = new List<MidValue>();
+            this.blockId = blockId;
+            arguments = new List<MidValue>();
+            instrs = new List<MidInstr?>();
+            InitArguments(argumentTypes_ ?? new List<TypeRef>());
+        }
+
+        /// <summary>
+        /// Set the argument types after creating the block.
+        /// This is only possible if no instructions were written yet.
+        /// </summary>
+        /// <param name="argumentTypes"></param>
+        public void InitArguments(List<TypeRef> argumentTypes)
+        {
+            if (instrs.Count != 0) throw new InvalidOperationException();
+            arguments.Clear();
             for (int i = 0; i < argumentTypes.Count; i++)
             {
                 arguments.Add(MidValue.Reg((uint)i, blockId, argumentTypes[i], Assertion.X));
             }
-            this.blockId = blockId;
-            instrs = new List<MidInstr?>();
         }
 
         public MidValue Argument(int i) => Arguments[i];

@@ -19,7 +19,7 @@ namespace RoisLang.mid_ir
         public abstract void SetOut(MidValue val);
         public abstract MidValue GetOut();
         public abstract TypeRef OutType();
-        public abstract MidValue[] AllArgs();
+        public abstract IEnumerable<MidValue> AllArgs();
         public abstract void Map(Func<MidValue, MidValue> map);
 
         public abstract void Dump();
@@ -57,7 +57,7 @@ namespace RoisLang.mid_ir
         public override void SetOut(MidValue val) => Out = val;
         public override MidValue GetOut() => Out;
         public override TypeRef OutType() => TypeRef.INT;
-        public override MidValue[] AllArgs() => new MidValue[] { Out, Lhs, Rhs };
+        public override IEnumerable<MidValue> AllArgs() { yield return Out; yield return Lhs; yield return Rhs; }
         public override void Map(Func<MidValue, MidValue> map)
         {
             Out = map(Out);
@@ -80,7 +80,7 @@ namespace RoisLang.mid_ir
         public override void SetOut(MidValue val) => Out = val;
         public override MidValue GetOut() => Out;
         public override TypeRef OutType() => TypeRef.INT;
-        public override MidValue[] AllArgs() => new MidValue[] { Out, Lhs, Rhs };
+        public override IEnumerable<MidValue> AllArgs() { yield return Out; yield return Lhs; yield return Rhs; }
         public override void Map(Func<MidValue, MidValue> map)
         {
             Out = map(Out);
@@ -103,7 +103,7 @@ namespace RoisLang.mid_ir
         public override void SetOut(MidValue val) => Out = val;
         public override MidValue GetOut() => Out;
         public override TypeRef OutType() => TypeRef.INT;
-        public override MidValue[] AllArgs() => new MidValue[] { Out, Lhs, Rhs };
+        public override IEnumerable<MidValue> AllArgs() { yield return Out; yield return Lhs; yield return Rhs; }
         public override void Map(Func<MidValue, MidValue> map)
         {
             Out = map(Out);
@@ -121,7 +121,7 @@ namespace RoisLang.mid_ir
         // This may be null, which means a "void value" is returned
         public MidValue Value;
 
-        public override MidValue[] AllArgs() => new MidValue[] { Value };
+        public override IEnumerable<MidValue> AllArgs() { yield return Value; }
 
         public override void Dump()
         {
@@ -153,10 +153,11 @@ namespace RoisLang.mid_ir
         public override void SetOut(MidValue val) { if (HasOut()) Out = val; }
         public override MidValue GetOut() => Out;
         public override TypeRef OutType() => ((FuncType)Callee.GetType()).Ret;
-        public override MidValue[] AllArgs() {
-            var l = new List<MidValue> { Out, Callee };
-            l.AddRange(Arguments);
-            return l.ToArray();
+        public override IEnumerable<MidValue> AllArgs()
+        {
+            yield return Out;
+            yield return Callee;
+            foreach (var a in Arguments) yield return a;
         }
         public override void Map(Func<MidValue, MidValue> map)
         {
@@ -194,7 +195,7 @@ namespace RoisLang.mid_ir
         public override void SetOut(MidValue val) => Out = val;
         public override MidValue GetOut() => Out;
         public override TypeRef OutType() => TypeRef.BOOL;
-        public override MidValue[] AllArgs() => new MidValue[] { Out, Lhs, Rhs };
+        public override IEnumerable<MidValue> AllArgs() { yield return Out; yield return Lhs; yield return Rhs; }
         public override void Map(Func<MidValue, MidValue> map)
         {
             Out = map(Out);
@@ -204,6 +205,69 @@ namespace RoisLang.mid_ir
         public override void Dump()
         {
             Console.WriteLine($"{Out} = ICmp.{Op} {Lhs}, {Rhs}");
+        }
+    }
+
+    public class MidGotoInstr : MidInstr
+    {
+        public int TargetBlockId = -1;
+        public MidValue[] Arguments;
+
+        public override IEnumerable<MidValue> AllArgs() => Arguments;
+
+        public override MidValue GetOut() => MidValue.Null();
+        public override bool HasOut() => false;
+        public override void SetOut(MidValue val) { }
+        public override TypeRef OutType() => TypeRef.VOID;
+
+        public override void Map(Func<MidValue, MidValue> map)
+        {
+            Arguments = Arguments.Select(map).ToArray();
+        }
+
+        public override void Dump()
+        {
+            Console.Write($"Goto BB{TargetBlockId}(");
+            for (int i = 0; i < Arguments.Length; i++)
+            {
+                if (i != 0) Console.Write(", "); ;
+                Console.Write(Arguments[i]);
+            }
+            Console.WriteLine(")");
+        }
+    }
+
+    public class MidBranchInstr : MidInstr
+    {
+        public MidValue Cond;
+        public MidGotoInstr Then;
+        public MidGotoInstr Else;
+
+        public override IEnumerable<MidValue> AllArgs()
+        {
+            yield return Cond;
+            foreach (var x in Then.AllArgs()) yield return x;
+            foreach (var x in Else.AllArgs()) yield return x;
+        }
+
+        public override MidValue GetOut() => MidValue.Null();
+        public override bool HasOut() => false;
+        public override void SetOut(MidValue val) { }
+        public override TypeRef OutType() => TypeRef.VOID;
+
+        public override void Map(Func<MidValue, MidValue> map)
+        {
+            Cond = map(Cond);
+            Then.Map(map);
+            Else.Map(map);
+        }
+
+        public override void Dump()
+        {
+            Console.Write($"If {Cond} Then ");
+            Then.Dump();
+            Console.Write("      Else ");
+            Else.Dump();
         }
     }
 }

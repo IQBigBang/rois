@@ -23,6 +23,13 @@ namespace RoisLang.mid_ir
             Blocks = new List<MidBlock> { entryBlock };
         }
 
+        public MidBlock NewBlock(List<TypeRef>? argumentTypes_ = null)
+        {
+            var block = new MidBlock((uint)Blocks.Count, argumentTypes_);
+            Blocks.Add(block);
+            return block;
+        }
+
         public void Dump()
         {
             Console.WriteLine($"def @{Name} : {FuncType}:");
