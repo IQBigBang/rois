@@ -35,8 +35,13 @@ namespace RoisLang.asm
         {
             // First, do RegAlloc
             var regAllocs = new RegAlloc().RegAllocBlock(block);
+            // We ATM depend on the block arguments always being allocated to specific registers
+            for (int i = 0; i < block.Arguments.Count; i++)
+            {
+                if (regAllocs[block.Argument(i)] != (GpReg)i) throw new Exception("unexpected register allocation");
+            }
             // Then, initialize AsmWriter
-            var asmWriter = new AsmWriter(output, regAllocs);
+            var asmWriter = new AsmWriter(output, regAllocs, fname);
 
             // write the block name in the assembly
             asmWriter.WriteLn("{}_bb{}:", fname, block.BlockId.ToString());
