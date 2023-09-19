@@ -9,6 +9,7 @@ namespace RoisLang.mid_ir.builder
 {
     public class MidBuilder
     {
+        private int Pos;
         private MidBlock? currentBlock;
 
         public MidBuilder()
@@ -19,7 +20,13 @@ namespace RoisLang.mid_ir.builder
         public void SwitchBlock(MidBlock block)
         {
             currentBlock = block;
+            Pos = currentBlock.Instrs.Count;
         }
+
+        public void SwitchToReplaceMode(int where) => Pos = where;
+        public void SwitchToAppendMode() => Pos = currentBlock!.Instrs.Count;
+
+        private int IncrementPos { get { Pos += 1; return Pos - 1; } }
 
         public MidBlock? CurrentBlock => currentBlock;
 
@@ -31,7 +38,7 @@ namespace RoisLang.mid_ir.builder
             lhs.AssertType(TypeRef.INT);
             rhs.AssertType(TypeRef.INT);
             var instr = new mid_ir.MidIAddInstr { Out = MidValue.Null(), Lhs = lhs, Rhs = rhs };
-            return currentBlock!.AddInstr(instr);
+            return currentBlock!.AddInstr(instr, IncrementPos);
         }
 
         public MidValue BuildISub(MidValue lhs, MidValue rhs)
@@ -39,7 +46,7 @@ namespace RoisLang.mid_ir.builder
             lhs.AssertType(TypeRef.INT);
             rhs.AssertType(TypeRef.INT);
             var instr = new mid_ir.MidISubInstr { Out = MidValue.Null(), Lhs = lhs, Rhs = rhs };
-            return currentBlock!.AddInstr(instr);
+            return currentBlock!.AddInstr(instr, IncrementPos);
         }
 
         public MidValue BuildIMul(MidValue lhs, MidValue rhs)
@@ -47,20 +54,20 @@ namespace RoisLang.mid_ir.builder
             lhs.AssertType(TypeRef.INT);
             rhs.AssertType(TypeRef.INT);
             var instr = new MidIMulInstr { Out = MidValue.Null(), Lhs = lhs, Rhs = rhs };
-            return currentBlock!.AddInstr(instr);
+            return currentBlock!.AddInstr(instr, IncrementPos);
         }
 
         public void BuildRet() => BuildRet(MidValue.Null());
         public void BuildRet(MidValue val)
         {
             var instr = new mid_ir.MidRetInstr { Value = val };
-            currentBlock!.AddInstr(instr);
+            currentBlock!.AddInstr(instr, IncrementPos);
         }
 
         public MidValue BuildCall(MidValue callee, MidValue[] args)
         {
             var instr = new MidCallInstr { Out = MidValue.Null(), Callee = callee, Arguments = args };
-            return currentBlock!.AddInstr(instr);
+            return currentBlock!.AddInstr(instr, IncrementPos);
         }
 
         public MidValue BuildICmp(MidValue lhs, MidValue rhs, MidICmpInstr.CmpOp op)
@@ -68,21 +75,24 @@ namespace RoisLang.mid_ir.builder
             lhs.AssertType(TypeRef.INT);
             rhs.AssertType(TypeRef.INT);
             var instr = new MidICmpInstr { Out = MidValue.Null(), Lhs = lhs, Rhs = rhs, Op = op };
-            return currentBlock!.AddInstr(instr);
+            return currentBlock!.AddInstr(instr, IncrementPos);
         }
 
-        public void BuildGoto(MidBlock targetBlock, MidValue[] args)
+        public void BuildGoto(MidBlock targetBlock, MidValue[] args) => BuildGoto(targetBlock.BlockId, args);
+        public void BuildGoto(int targetBlockId, MidValue[] args)
         {
-            var instr = new MidGotoInstr { TargetBlockId = targetBlock.BlockId, Arguments = args };
-            currentBlock!.AddInstr(instr);
+            var instr = new MidGotoInstr { TargetBlockId = targetBlockId, Arguments = args };
+            currentBlock!.AddInstr(instr, IncrementPos);
         }
 
         public MidBranchInstr BuildBranch(MidValue condition, MidBlock thenTargetBlock, MidValue[] thenArgs, MidBlock elseTargetBlock, MidValue[] elseArgs)
+            => BuildBranch(condition, thenTargetBlock.BlockId, thenArgs, elseTargetBlock.BlockId, elseArgs);
+        public MidBranchInstr BuildBranch(MidValue condition, int thenTargetBlock, MidValue[] thenArgs, int elseTargetBlock, MidValue[] elseArgs)
         {
-            var thenGoto = new MidGotoInstr { TargetBlockId = thenTargetBlock.BlockId, Arguments = thenArgs };
-            var elseGoto = new MidGotoInstr { TargetBlockId = elseTargetBlock.BlockId, Arguments = elseArgs };
+            var thenGoto = new MidGotoInstr { TargetBlockId = thenTargetBlock, Arguments = thenArgs };
+            var elseGoto = new MidGotoInstr { TargetBlockId = elseTargetBlock, Arguments = elseArgs };
             var instr = new MidBranchInstr { Cond = condition, Then = thenGoto, Else = elseGoto };
-            currentBlock!.AddInstr(instr);
+            currentBlock!.AddInstr(instr, IncrementPos);
             return instr;
         }
     }

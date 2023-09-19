@@ -17,10 +17,10 @@ namespace RoisLang.mid_ir
         private readonly List<MidValue> arguments;
         private readonly List<MidInstr?> instrs;
 
-        public IReadOnlyList<MidValue> Arguments => arguments;
-        public IReadOnlyList<MidInstr?> Instrs => instrs;
+        public List<MidValue> Arguments => arguments;
+        public List<MidInstr?> Instrs => instrs;
 
-        private uint NextInstrRegIdx => (uint)(arguments.Count + Instrs.Count);
+        // private uint NextInstrRegIdx => (uint)(arguments.Count + Instrs.Count);
 
         public MidBlock(uint blockId, List<TypeRef>? argumentTypes_ = null)
         {
@@ -47,31 +47,36 @@ namespace RoisLang.mid_ir
 
         public MidValue Argument(int i) => Arguments[i];
 
-        public MidValue AddInstr(MidInstr instr)
+        public MidValue AddInstr(MidInstr instr, int pos = -1)
         {
             // verification
             foreach (var val in instr.AllArgs())
             {
-                if (val.IsReg) {
+                if (val.IsReg)
+                {
                     // verify the register is from this block
                     if (val.GetBasicBlock() != blockId)
                         throw new Exception("A foreign block value used in basic block");
                     // verify the register is well-defined
-                    if (val.GetRegNum() > NextInstrRegIdx)
+                    if (val.GetRegNum() > Arguments.Count + Instrs.Count)
                         throw new Exception("Undefined register used");
                 }
             }
 
+            if (pos == -1) pos = Instrs.Count;
+
             if (instr.HasOut())
             {
-                var newReg = MidValue.Reg(NextInstrRegIdx, blockId, instr.OutType(), Assertion.X);
+                var newReg = MidValue.Reg((uint)(Arguments.Count + pos), blockId, instr.OutType(), Assertion.X);
                 instr.SetOut(newReg);
-                instrs.Add(instr);
+                if (pos == Instrs.Count) instrs.Add(instr);
+                else instrs[pos] = instr;
                 return newReg;
             }
             else
             {
-                instrs.Add(instr);
+                if (pos == Instrs.Count) instrs.Add(instr);
+                else instrs[pos] = instr;
                 return MidValue.Null();
             }
         }
@@ -104,5 +109,20 @@ namespace RoisLang.mid_ir
         }
 
         public int BlockId => (int)blockId;
+
+        public MidValue GetRegister(uint n)
+        {
+            if ((int)n < Arguments.Count) return Arguments[(int)n];
+            else return Instrs[(int)(n - Arguments.Count)]?.GetOut() ?? MidValue.Null();
+        }
+
+        public void UpdateReferences()
+        {
+            foreach (var instr in Instrs)
+            {
+                if (instr is null) continue;
+                instr.Map(val => val.IsReg ? GetRegister(val.GetRegNum()) : val);
+            }
+        }
     }
 }
