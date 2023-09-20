@@ -9,7 +9,7 @@ namespace RoisLang.opt
 {
     public interface IPass
     {
-        public void RunOnFunction(MidFunc func)
+        public virtual void RunOnFunction(MidFunc func)
         {
             foreach (var block in func.Blocks)
             {
