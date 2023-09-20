@@ -142,11 +142,12 @@ namespace RoisLang.lower
                         var allLocals = GetAllLocals();
                         var typesList = allLocals.Select(x => x.Value.GetType()).ToList();
                         var ifBlock = currentFunc!.NewBlock(typesList);
-                        var continueBlock = currentFunc.NewBlock(typesList);
+                        var elseBlock = currentFunc.NewBlock(typesList);
+                        var continueBlock = ifStmt.HasElse ? currentFunc.NewBlock(typesList) : elseBlock;
                         // take the values of `allLocals` and pass them to the blocks
                         var allLocalsValues = allLocals.Select(x => x.Value).ToArray();
                         var allLocalsNames = allLocals.Select(x => x.Key).ToList();
-                        var branchInstr = Builder.BuildBranch(cond, ifBlock, allLocalsValues, continueBlock, allLocalsValues);
+                        var branchInstr = Builder.BuildBranch(cond, ifBlock, allLocalsValues, elseBlock, allLocalsValues);
                         // now switch to the `if` block
                         // all the locals are now arguments to the ifBlock which means different `MidValue`s
                         // we call this a "context switch"
@@ -160,6 +161,17 @@ namespace RoisLang.lower
                                 LowerStmt(stmt1);
                             }
                             // switch from `if` to `continue`
+                            Builder.BuildGoto(continueBlock, allLocalsNames.Select(name => Symbols[name]).ToArray());
+                        }
+                        // if there is an `else` block, write it
+                        if (ifStmt.HasElse)
+                        {
+                            using var _ = Symbols.EnterNewScope();
+                            DoContextSwitch(allLocalsNames, elseBlock);
+                            Builder.SwitchBlock(elseBlock);
+                            foreach (var stmt1 in ifStmt.Else)
+                                LowerStmt(stmt1);
+                            // switch from `else` to `continue`
                             Builder.BuildGoto(continueBlock, allLocalsNames.Select(name => Symbols[name]).ToArray());
                         }
                         // now we switch to the `continue` block

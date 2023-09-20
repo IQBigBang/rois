@@ -45,8 +45,8 @@ namespace RoisLang.types
             {
                 TypeckStmt(stmt);
             }
-            if (!Ret.IsVoid && f.Body.Last() is not ReturnStmt)
-                throw new Exception("Non-void functions must end with a return statement");
+            //if (!Ret.IsVoid && f.Body.Last() is not ReturnStmt)
+            //    throw new Exception("Non-void functions must end with a return statement");
         }
 
         void TypeckStmt(Stmt stmt)
@@ -84,8 +84,11 @@ namespace RoisLang.types
                         // the if-statement body is a new scope
                         using (var _ = Symbols.EnterNewScope())
                         {
-                            foreach (var thenStmt in ifStmt.Then)
-                                TypeckStmt(thenStmt);
+                            foreach (var thenStmt in ifStmt.Then) TypeckStmt(thenStmt);
+                        }
+                        using (var _ = Symbols.EnterNewScope())
+                        {
+                            foreach (var elseStmt in ifStmt.Else) TypeckStmt(elseStmt);
                         }
                         return;
                     }

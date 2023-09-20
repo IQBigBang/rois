@@ -56,6 +56,7 @@ namespace RoisLang.parser
         // the 'return' keyword
         KwReturn,
         KwIf,
+        KwElse,
         KwTrue,
         KwFalse,
     }
@@ -237,6 +238,8 @@ namespace RoisLang.parser
                 tokens.Add(SimpleToken(Token.KwFalse, 5));
             else if (s == "if")
                 tokens.Add(SimpleToken(Token.KwIf, 2));
+            else if (s == "else")
+                tokens.Add(SimpleToken(Token.KwElse, 4));
             else
                 tokens.Add(SimpleToken(Token.Sym, len));
         }

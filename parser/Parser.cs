@@ -83,7 +83,10 @@ namespace RoisLang.parser
             .IgnoreThen(GetExpr())
             .Then(cond => Superpower.Parsers.Token.Sequence(Token.Colon, Token.Nl)
                           .IgnoreThen(GetBlock())
-                          .Select(block => (Stmt)new IfStmt(cond, block)));
+                           .Then(thenBlock => Superpower.Parsers.Token.Sequence(Token.KwElse, Token.Colon, Token.Nl)
+                                              .IgnoreThen(GetBlock())
+                                              .OptionalOrDefault(Array.Empty<Stmt>())
+                                              .Select(elseBlock => (Stmt)new IfStmt(cond, thenBlock, elseBlock))));
 
         private static readonly TokenListParser<Token, Stmt> ParseStmt =
             LetStmt.Or(ReturnStmt).Or(IfStmt).Or(AssignOrDiscardStmt);
