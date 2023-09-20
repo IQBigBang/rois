@@ -14,13 +14,13 @@ namespace RoisLang.asm
         /// Allocated physical registers
         /// </summary>
         Dictionary<MidValue, GpReg> regs;
-        string funcName;
+        MidFunc function;
 
-        public AsmWriter(TextWriter output, Dictionary<MidValue, GpReg> regs, string funcName)
+        public AsmWriter(TextWriter output, Dictionary<MidValue, GpReg> regs, MidFunc function)
         {
             this.output = output;
             this.regs = regs;
-            this.funcName = funcName;
+            this.function = function;
         }
 
         public const bool ASM_MOVES_USE_NEW_ALGORITHM = true;
@@ -200,9 +200,10 @@ namespace RoisLang.asm
                 case MidGotoInstr gotoInstr:
                     {
                         // a `goto` is just shuffling of values followed by jmp
-                        // we rely on the block arguments ALWAYS being allocated as: rcx,rdx,r8,r9,rdi,rsi,rax
-                        WriteMoves(gotoInstr.Arguments, new GpReg[] { GpReg.Rcx, GpReg.Rdx, GpReg.R8, GpReg.R9, GpReg.Rdi, GpReg.Rsi, GpReg.Rax });
-                        WriteLn($"jmp {funcName}_bb{gotoInstr.TargetBlockId}");
+                        // `regs` should contain allocations for all registers in the function (incl. other blocks)
+                        WriteMoves(gotoInstr.Arguments,
+                                   function.Blocks[gotoInstr.TargetBlockId].Arguments.Select(x => regs[x]).ToArray());
+                        WriteLn($"jmp {function.Name}_bb{gotoInstr.TargetBlockId}");
                     }
                     break;
                 case MidBranchInstr branchInstr:
@@ -215,13 +216,15 @@ namespace RoisLang.asm
                         WriteLn($"jne {randName}"); // Jump to `Then`
                         // Now we're doing `Else`
                         // Shuffle the values (see GotoInstr)
-                        WriteMoves(branchInstr.Else.Arguments, new GpReg[] { GpReg.Rcx, GpReg.Rdx, GpReg.R8, GpReg.R9, GpReg.Rdi, GpReg.Rsi, GpReg.Rax });
-                        WriteLn($"jmp {funcName}_bb{branchInstr.Else.TargetBlockId}");
+                        WriteMoves(branchInstr.Else.Arguments,
+                                   function.Blocks[branchInstr.Else.TargetBlockId].Arguments.Select(x => regs[x]).ToArray());
+                        WriteLn($"jmp {function.Name}_bb{branchInstr.Else.TargetBlockId}");
                         // Now the `if` branch
                         WriteLn($"{randName}: ");
                         // Shuffle the values
-                        WriteMoves(branchInstr.Then.Arguments, new GpReg[] { GpReg.Rcx, GpReg.Rdx, GpReg.R8, GpReg.R9, GpReg.Rdi, GpReg.Rsi, GpReg.Rax });
-                        WriteLn($"jmp {funcName}_bb{branchInstr.Then.TargetBlockId}");
+                        WriteMoves(branchInstr.Then.Arguments,
+                                   function.Blocks[branchInstr.Then.TargetBlockId].Arguments.Select(x => regs[x]).ToArray());
+                        WriteLn($"jmp {function.Name}_bb{branchInstr.Then.TargetBlockId}");
                     }
                     break;
                 default:

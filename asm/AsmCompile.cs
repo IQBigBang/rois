@@ -25,26 +25,26 @@ namespace RoisLang.asm
 
         public static void CompileFunc(TextWriter output, MidFunc func)
         {
+            // Because of jumping between blocks, we have to RegAlloc all blocks before
+            // and we can just concatenate all of the dictionaries into one
+            Dictionary<MidValue, GpReg> allRegAllocs = new();
+            foreach (var block in func.Blocks)
+                foreach (var kvp in new RegAlloc().RegAllocBlock(block))
+                    allRegAllocs.Add(kvp.Key, kvp.Value); // this throws an exception on duplicate key, which is expected
+
             output.WriteLine($"{func.Name}:");
             foreach (var block in func.Blocks)
-                CompileBlock(output, func.Name, block);
+                CompileBlock(output, func, block, allRegAllocs);
             output.Flush();
         }
 
-        private static void CompileBlock(TextWriter output, string fname, MidBlock block)
+        private static void CompileBlock(TextWriter output, MidFunc func, MidBlock block, Dictionary<MidValue, GpReg> regAllocs)
         {
-            // First, do RegAlloc
-            var regAllocs = new RegAlloc().RegAllocBlock(block);
-            // We ATM depend on the block arguments always being allocated to specific registers
-            for (int i = 0; i < block.Arguments.Count; i++)
-            {
-                if (regAllocs[block.Argument(i)] != (GpReg)i) throw new Exception("unexpected register allocation");
-            }
             // Then, initialize AsmWriter
-            var asmWriter = new AsmWriter(output, regAllocs, fname);
+            var asmWriter = new AsmWriter(output, regAllocs, func);
 
             // write the block name in the assembly
-            asmWriter.WriteLn("{}_bb{}:", fname, block.BlockId.ToString());
+            asmWriter.WriteLn("{}_bb{}:", func.Name, block.BlockId.ToString());
             // if the block is the entry block, we have to do `mov`s from argument registers to assigned registers
             if (block.BlockId == 0)
             {

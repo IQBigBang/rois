@@ -109,7 +109,7 @@ namespace RoisLang.asm
                 var dest = dests[i];
                 if (reverse)
                 {
-                    if (value.IsNull) continue;
+                    if (value.IsNull || dest == GpReg.RNull) continue;
                     else if (value.IsReg)
                     {
                         var actualDestReg = allocatedRegs[value];
@@ -123,7 +123,7 @@ namespace RoisLang.asm
                 }
                 else
                 {
-                    if (value.IsNull) continue;
+                    if (value.IsNull || dest == GpReg.RNull) continue;
                     else if (value.IsConstInt)
                     {
                         graph.AddVerticesAndEdge(new Edge<Vertex>(
