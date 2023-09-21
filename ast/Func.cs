@@ -23,13 +23,27 @@ namespace RoisLang.ast
         }
     }
 
+    public class ClassDef
+    {
+        public string Name;
+        public (TypeRef, string)[] Fields;
+
+        public ClassDef(string name, (TypeRef, string)[] fields)
+        {
+            Name = name;
+            Fields = fields;
+        }
+    }
+
     public class Program
     {
+        public ClassDef[] Classes;
         public Func[] Functions;
 
-        public Program(Func[]? functions = null)
+        public Program(ClassDef[] classes, Func[] functions)
         {
-            Functions = functions ?? Array.Empty<Func>();
+            Classes = classes;
+            Functions = functions;
         }
     }
 }

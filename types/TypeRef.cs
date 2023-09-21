@@ -12,6 +12,7 @@ namespace RoisLang.types
         public abstract bool IsInt { get; }
         public abstract bool IsFunc { get; }
         public bool IsBool => this is BoolType;
+        public bool IsClass => this is ClassType;
 
         public static readonly TypeRef UNKNOWN = new TypeUnknown();
         public static readonly TypeRef INT = new IntType();
@@ -42,6 +43,8 @@ namespace RoisLang.types
                 }
                 return true;
             }
+            if (IsClass && other.IsClass)
+                return ((ClassType)this).Name == ((ClassType)other).Name;
             return false;
         }
     }

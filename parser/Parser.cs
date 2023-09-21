@@ -11,9 +11,12 @@ namespace RoisLang.parser
 {
     internal class Parser
     {
+        private static TypeBuilder? typeBuilder;
+
         private static readonly TokenListParser<Token, TypeRef> TypeName
             = Superpower.Parsers.Token.EqualToValue(Token.Sym, "int").Value(TypeRef.INT)
-              .Or(Superpower.Parsers.Token.EqualToValue(Token.Sym, "bool").Value(TypeRef.BOOL));
+              .Or(Superpower.Parsers.Token.EqualToValue(Token.Sym, "bool").Value(TypeRef.BOOL))
+              .Or(Superpower.Parsers.Token.EqualTo(Token.Sym).Select(name => (TypeRef)typeBuilder!.GetClassType(name.ToStringValue())));
 
         private static readonly TokenListParser<Token, Expr> Atom =
             Superpower.Parsers.Token.EqualTo(Token.Int).Select(s => (Expr)new IntExpr(int.Parse(s.ToStringValue())))
@@ -126,19 +129,46 @@ namespace RoisLang.parser
                     )
                );
 
+        private static readonly TokenListParser<Token, (TypeRef, string)> ParseField =
+            Superpower.Parsers.Token.EqualTo(Token.KwVal)
+            .IgnoreThen(Superpower.Parsers.Token.EqualTo(Token.Sym))
+            .Then(fieldName => Superpower.Parsers.Token.EqualTo(Token.Colon)
+                                .IgnoreThen(TypeName)
+                                .Then(type => Superpower.Parsers.Token.EqualTo(Token.Nl)
+                                              .Value((type, fieldName.ToStringValue()))));
+
+        private static readonly TokenListParser<Token, ClassDef> ParseClassDef =
+            Superpower.Parsers.Token.EqualTo(Token.KwClass)
+            .IgnoreThen(Superpower.Parsers.Token.EqualTo(Token.Sym))
+            .Then(className =>
+                Superpower.Parsers.Token.Sequence(Token.Colon, Token.Nl, Token.Indent)
+                .IgnoreThen(ParseField.Many())
+                .Then(fields => Superpower.Parsers.Token.EqualTo(Token.Dedent)
+                                .Value(new ClassDef(className.ToStringValue(), fields))));
+
         private static readonly TokenListParser<Token, ast.Program> ParseProgram =
             Superpower.Parsers.Token.EqualTo(Token.Nl).Optional()
             .IgnoreThen(
-            ParseFuncDef.Then(func => Superpower.Parsers.Token.EqualTo(Token.Nl).Optional().Value(func))
-            .Many().Select(x => new ast.Program(x))
-            );
+                ParseClassDef.Select(x => (object)x).Or(ParseFuncDef.Select(x => (object)x))
+                .Then(x => Superpower.Parsers.Token.EqualTo(Token.Nl).Optional().Value(x))
+                .Many()
+                .Select(xs => 
+                {
+                    var classes = xs.Where(x => x is ClassDef).Select(x => (ClassDef)x).ToArray();
+                    var funcs = xs.Where(x => x is Func).Select(x => (Func)x).ToArray();
+                    return new ast.Program(classes, funcs);
+                }));
 
         public static ast.Program LexAndParse(string s)
         {
             var tokens = Lexer.TokenizeString(s);
+            // ! this is important
+            typeBuilder = new TypeBuilder();
             var result = ParseProgram(new Superpower.Model.TokenList<Token>(tokens.ToArray()));
             if (!result.HasValue)
                 Console.WriteLine(result.FormatErrorMessageFragment());
+            // ! now fill in the types
+            typeBuilder.InitializeAll(result.Value.Classes);
             return result.Value;
         }
 

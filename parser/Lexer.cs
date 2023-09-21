@@ -59,6 +59,8 @@ namespace RoisLang.parser
         KwElse,
         KwTrue,
         KwFalse,
+        KwClass,
+        KwVal,
     }
 
     public class Lexer
@@ -240,6 +242,10 @@ namespace RoisLang.parser
                 tokens.Add(SimpleToken(Token.KwIf, 2));
             else if (s == "else")
                 tokens.Add(SimpleToken(Token.KwElse, 4));
+            else if (s == "class")
+                tokens.Add(SimpleToken(Token.KwClass, 5));
+            else if (s == "val")
+                tokens.Add(SimpleToken(Token.KwVal, 3));
             else
                 tokens.Add(SimpleToken(Token.Sym, len));
         }
