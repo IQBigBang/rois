@@ -65,9 +65,11 @@ namespace RoisLang.opt
                         }
                         break;
                     // Cannot be constant-folded
-                    case MidGotoInstr gotoInstr:
-                    case MidRetInstr retInstr:
-                    case MidCallInstr callInstr:
+                    case MidGotoInstr _:
+                    case MidRetInstr _:
+                    case MidCallInstr _:
+                    case MidStoreInstr _:
+                    case MidLoadInstr _:
                         break;
                     default:
                         throw new NotImplementedException();

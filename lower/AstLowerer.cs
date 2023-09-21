@@ -101,6 +101,11 @@ namespace RoisLang.lower
                         var arguments = callExpr.Args.Select(x => LowerExpr(x)).ToArray();
                         return Builder.BuildCall(callee, arguments);
                     }
+                case ast.MemberExpr memberExpr:
+                    {
+                        var obj = LowerExpr(memberExpr.Object);
+                        return Builder.BuildLoad(obj, memberExpr.MemberName);
+                    }
                 default:
                     throw new NotImplementedException();
             }
@@ -125,6 +130,10 @@ namespace RoisLang.lower
                         if (assignStmt.Lhs is ast.VarExpr varExpr)
                         {
                             Symbols.Set(varExpr.Name, value);
+                        } else if (assignStmt.Lhs is MemberExpr memberExpr)
+                        {
+                            var obj = LowerExpr(memberExpr.Object);
+                            Builder.BuildStore(obj, value, memberExpr.MemberName);
                         }
                         else throw new Exception();
                         return;

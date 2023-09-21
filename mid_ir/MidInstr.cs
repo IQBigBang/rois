@@ -270,4 +270,56 @@ namespace RoisLang.mid_ir
             Else.Dump();
         }
     }
+
+    public record FieldInfo(ClassType Class, int FieldN)
+    {
+        public FieldInfo(ClassType class_, string fieldName)
+            : this(class_, Array.FindIndex(class_.Fields, x => x.Item1 == fieldName)) { }
+        public override string ToString() => $"{Class}.{Class.Fields[FieldN].Item1}";
+        public TypeRef FieldType() => Class.Fields[FieldN].Item2;
+    }
+
+    public class MidLoadInstr : MidInstr
+    {
+        public FieldInfo FieldInfo;
+        public MidValue Object;
+        public MidValue Out;
+
+        public override bool HasOut() => true;
+        public override void SetOut(MidValue val) => Out = val;
+        public override MidValue GetOut() => Out;
+        public override TypeRef OutType() => FieldInfo.FieldType();
+        public override IEnumerable<MidValue> AllArgs() { yield return Out; yield return Object; }
+        public override void Map(Func<MidValue, MidValue> map)
+        {
+            Out = map(Out);
+            Object = map(Object);
+        }
+        public override void Dump()
+        {
+            Console.WriteLine($"{Out} = Load {FieldInfo} {Object}");
+        }
+    }
+
+    public class MidStoreInstr : MidInstr
+    {
+        public FieldInfo FieldInfo;
+        public MidValue Object;
+        public MidValue Value;
+
+        public override bool HasOut() => false;
+        public override void SetOut(MidValue val) { }
+        public override MidValue GetOut() => MidValue.Null();
+        public override TypeRef OutType() => TypeRef.VOID;
+        public override IEnumerable<MidValue> AllArgs() { yield return Value; yield return Object; }
+        public override void Map(Func<MidValue, MidValue> map)
+        {
+            Value = map(Value);
+            Object = map(Object);
+        }
+        public override void Dump()
+        {
+            Console.WriteLine($"Store {FieldInfo} {Object}, {Value}");
+        }
+    }
 }

@@ -147,6 +147,21 @@ namespace RoisLang.types
                         else throw new Exception("Typechecking error");
                     }
                     break;
+                case MemberExpr memberExpr:
+                    {
+                        var objectType = TypeckExpr(memberExpr.Object);
+                        if (!objectType.IsClass)
+                            throw new Exception("Typechecking error");
+                        foreach (var field in ((ClassType)objectType).Fields)
+                        {
+                            if (field.Item1 == memberExpr.MemberName)
+                            {
+                                memberExpr.Ty = field.Item2;
+                                break;
+                            }
+                        }
+                    }
+                    break;
                 default:
                     throw new NotImplementedException();
             }

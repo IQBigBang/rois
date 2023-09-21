@@ -49,4 +49,9 @@ namespace RoisLang.ast
     {
         public override bool IsValidLhs() => false;
     }
+
+    public record MemberExpr(Expr Object, string MemberName) : Expr()
+    {
+        public override bool IsValidLhs() => true;
+    }
 }

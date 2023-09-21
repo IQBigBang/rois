@@ -49,6 +49,8 @@ namespace RoisLang.parser
         Greater,
         // >=
         GreaterEqual,
+        // .
+        Dot,
         // the 'let' keyword
         KwLet,
         // the 'def' keyword
@@ -164,6 +166,8 @@ namespace RoisLang.parser
                     else
                         tokens.Add(SimpleToken(Token.Greater, 1));
                 }
+                else if (ch == '.')
+                    tokens.Add(SimpleToken(Token.Dot, 1));
                 // symbols and numbers
                 else if (char.IsDigit(ch))
                     LexInt();
@@ -225,7 +229,7 @@ namespace RoisLang.parser
         private void LexSymbol()
         {
             int len = 0;
-            while ((Pos + len) < Source.Length && char.IsLetterOrDigit(Source[Pos + len]))
+            while ((Pos + len) < Source.Length && (char.IsLetterOrDigit(Source[Pos + len]) || Source[Pos + len] == '_'))
                 len++;
             string s = Source.Substring(Pos, len);
             if (s == "let")
