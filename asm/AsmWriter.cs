@@ -35,7 +35,7 @@ namespace RoisLang.asm
                 foreach (var move in moves)
                 {
                     if (move is MovesAlgorithm.MovIR movIR)
-                        WriteLn("mov {b64}, {b64}", movIR.dest, movIR.value);
+                        WriteLn("mov {b64}, {b64}", movIR.dest, movIR.value.ToString());
                     if (move is MovesAlgorithm.MovRR movRR)
                         WriteLn("mov {b64}, {b64}", movRR.dest, movRR.value);
                     if (move is MovesAlgorithm.Swap swap)
