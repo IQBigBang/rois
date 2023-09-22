@@ -11,6 +11,7 @@ namespace RoisLang.asm
     {
         public static void CompileAllFuncs(TextWriter output, IEnumerable<MidFunc> funcs)
         {
+            StructLayout structLayout = new();
             output.WriteLine("\tdefault rel");
             foreach (var func in funcs)
                 output.WriteLine($"global {func.Name}");
@@ -18,12 +19,13 @@ namespace RoisLang.asm
             output.WriteLine();
             foreach (var func in funcs)
             {
-                CompileFunc(output, func);
+                CompileFunc(output, func, structLayout);
                 output.WriteLine();
             }
+            structLayout.PrintRepresentations();
         }
 
-        public static void CompileFunc(TextWriter output, MidFunc func)
+        public static void CompileFunc(TextWriter output, MidFunc func, StructLayout structLayout)
         {
             // Because of jumping between blocks, we have to RegAlloc all blocks before
             // and we can just concatenate all of the dictionaries into one
@@ -34,14 +36,14 @@ namespace RoisLang.asm
 
             output.WriteLine($"{func.Name}:");
             foreach (var block in func.Blocks)
-                CompileBlock(output, func, block, allRegAllocs);
+                CompileBlock(output, func, block, allRegAllocs, structLayout);
             output.Flush();
         }
 
-        private static void CompileBlock(TextWriter output, MidFunc func, MidBlock block, Dictionary<MidValue, GpReg> regAllocs)
+        private static void CompileBlock(TextWriter output, MidFunc func, MidBlock block, Dictionary<MidValue, GpReg> regAllocs, StructLayout structLayout)
         {
             // Then, initialize AsmWriter
-            var asmWriter = new AsmWriter(output, regAllocs, func);
+            var asmWriter = new AsmWriter(output, regAllocs, func, structLayout);
 
             // write the block name in the assembly
             asmWriter.WriteLn("{}_bb{}:", func.Name, block.BlockId.ToString());

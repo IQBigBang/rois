@@ -10,17 +10,19 @@ namespace RoisLang.asm
     public class AsmWriter
     {
         TextWriter output;
+        StructLayout structLayout;
         /// <summary>
         /// Allocated physical registers
         /// </summary>
         Dictionary<MidValue, GpReg> regs;
         MidFunc function;
 
-        public AsmWriter(TextWriter output, Dictionary<MidValue, GpReg> regs, MidFunc function)
+        public AsmWriter(TextWriter output, Dictionary<MidValue, GpReg> regs, MidFunc function, StructLayout structLayout)
         {
             this.output = output;
             this.regs = regs;
             this.function = function;
+            this.structLayout = structLayout;
         }
 
         public const bool ASM_MOVES_USE_NEW_ALGORITHM = true;
@@ -227,6 +229,19 @@ namespace RoisLang.asm
                         WriteLn($"jmp {function.Name}_bb{branchInstr.Then.TargetBlockId}");
                     }
                     break;
+                case MidLoadInstr loadInstr:
+                    {
+                        if (regs[loadInstr.Out] == GpReg.RNull) break;
+                        var fieldOffset = structLayout.GetFieldOffset(loadInstr.FieldInfo);
+                        WriteLn("mov {b}, [{b64}+{}]", loadInstr.Out, loadInstr.Object, fieldOffset.ToString());
+                    }
+                    break;
+                case MidStoreInstr storeInstr:
+                    {
+                        var fieldOffset = structLayout.GetFieldOffset(storeInstr.FieldInfo);
+                        WriteLn("mov [{b64}+{}], {b}", storeInstr.Object, fieldOffset.ToString(), storeInstr.Value);
+                    }
+                    break;
                 default:
                     throw new NotImplementedException();
             }
@@ -275,7 +290,7 @@ namespace RoisLang.asm
                     output.Write(midValue.GetIntValue());
                     return;
                 }
-                if (formatSpecifiers.Contains("b32"))
+                if (formatSpecifiers.Contains("b") || formatSpecifiers.Contains("b32"))
                 {
                     output.Write("dword ");
                     output.Write(midValue.GetIntValue());
@@ -289,7 +304,7 @@ namespace RoisLang.asm
                     output.Write("qword " + (midValue.GetBoolValue() ? "1" : "0"));
                     return;
                 }
-                if (formatSpecifiers.Contains("b32"))
+                if (formatSpecifiers.Contains("b") || formatSpecifiers.Contains("b32"))
                 {
                     output.Write("dword " + (midValue.GetBoolValue() ? "1" : "0"));
                     return;
@@ -297,7 +312,7 @@ namespace RoisLang.asm
             }
             if (midValue.IsReg)
             {
-                WriteGpReg(regs[midValue], formatSpecifiers);
+                WriteGpReg(regs[midValue], formatSpecifiers, midValue.GetType());
                 return;
             }
             if (midValue.IsGlobal)
@@ -311,9 +326,11 @@ namespace RoisLang.asm
             throw new Exception("Invalid format");
         }
 
-        private void WriteGpReg(GpReg gpReg, string[] formatSpecifiers)
+        private void WriteGpReg(GpReg gpReg, string[] formatSpecifiers, types.TypeRef? type = null)
         {
-            if (formatSpecifiers.Contains("b64"))
+            // `b` means variable-size based on the type
+            // TODO: stop using b64,b32 use only `b`
+            if (formatSpecifiers.Contains("b64") || (formatSpecifiers.Contains("b") && type!.GetRepr().Size() == 8))
             {
                 output.Write(gpReg switch
                 {
@@ -328,7 +345,7 @@ namespace RoisLang.asm
                 });
                 return;
             }
-            if (formatSpecifiers.Contains("b32"))
+            if (formatSpecifiers.Contains("b32") || (formatSpecifiers.Contains("b") && type!.GetRepr().Size() == 4))
             {
                 output.Write(gpReg switch
                 {
