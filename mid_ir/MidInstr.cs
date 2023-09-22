@@ -169,7 +169,7 @@ namespace RoisLang.mid_ir
         {
             if (!Out.IsNull)
                 Console.Write($"{Out} = ");
-            Console.Write($"{Callee}");
+            Console.Write($"Call {Callee}");
             for (int i = 0; i < Arguments.Length; i++)
             {
                 Console.Write($", {Arguments[i]}");

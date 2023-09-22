@@ -70,6 +70,7 @@ namespace RoisLang.asm
                 }
                 // if we reached this point, there are still nodes but all of them
                 // have an output => a cycle exists
+                if (TryResolveCycle(graph, instructions)) goto next;
                 // right before failing, print the graph for debug reasons
                 var renderAlg = new QuikGraph.Graphviz.GraphvizAlgorithm<Vertex, Edge<Vertex>>(graph);
                 renderAlg.FormatVertex += RenderAlg_FormatVertex;
@@ -81,6 +82,22 @@ namespace RoisLang.asm
 
             return instructions;
 
+        }
+
+        private static bool TryResolveCycle(AdjacencyGraph<Vertex, Edge<Vertex>> graph, List<MoveInstr> outInstrs)
+        {
+            // We handle the very simple case of a two-cycle
+            if (graph.VertexCount != 2) return false;
+            var vertA = graph.Vertices.ElementAt(0);
+            var vertB = graph.Vertices.ElementAt(1);
+            if (graph.OutEdges(vertA).All(e => e.Target == vertB) && graph.OutEdges(vertB).All(e => e.Target == vertA))
+            {
+                outInstrs.Add(new Swap(((VertRegister)vertA).gpReg, ((VertRegister)vertB).gpReg));
+                graph.RemoveVertex(vertA);
+                graph.RemoveVertex(vertB);
+                return true;
+            }
+            else return false;
         }
 
         private static List<Edge<Vertex>> GetInputEdgesOf(AdjacencyGraph<Vertex, Edge<Vertex>> graph, Vertex outVertex)
