@@ -167,8 +167,14 @@ namespace RoisLang.asm
                         // Windows x64 calling convention = arguments in rcx, rdx, r8, r9 (in this order)
                         if (callInstr.Arguments.Length > 4) throw new Exception("More than 4 args not supported");
                         WriteMoves(callInstr.Arguments, new GpReg[] { GpReg.Rcx, GpReg.Rdx, GpReg.R8, GpReg.R9 });
+                        // The Windows x64 cconv requires 32 bytes of shadow space
+                        // we don't bother with this inside our own code, but if calling an extern function
+                        // it MUST be done
+                        if (callInstr.Callee.GetGlobalValue().IsExtern) WriteLn("sub rsp, 32");
                         // now the call
+                        // TODO: before calling, the stack should be aligned at 16 bytes
                         WriteLn("call {addr}", callInstr.Callee);
+                        if (callInstr.Callee.GetGlobalValue().IsExtern) WriteLn("add rsp, 32");
                         // if there is a result, move it into the correct register
                         if (!callInstr.Out.IsNull && (regs[callInstr.Out] != GpReg.RNull))
                             WriteLn("mov {b64}, rax", callInstr.Out);

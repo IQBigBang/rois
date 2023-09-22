@@ -30,7 +30,7 @@ namespace RoisLang.lower
             foreach (var func in program.Functions)
             {
                 if (Symbols.Contains(func.Name)) throw new Exception();
-                var midFunc = new MidFunc(func.Name, func.Arguments.Select(x => x.Item2).ToList(), func.Ret);
+                var midFunc = new MidFunc(func.Name, func.Arguments.Select(x => x.Item2).ToList(), func.Ret, func.Extern);
                 midFuncs.Add(midFunc);
                 var value = MidValue.Global(midFunc, Assertion.X);
                 Symbols.AddNew(func.Name, value);
@@ -42,6 +42,7 @@ namespace RoisLang.lower
 
         private void LowerFunc(Func f, MidFunc target)
         {
+            if (f.Extern) return;
             currentFunc = target;
             Builder.SwitchBlock(target.EntryBlock);
             using var _ = Symbols.EnterNewScope();

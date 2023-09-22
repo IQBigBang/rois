@@ -2,6 +2,7 @@
 using RoisLang.utils;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -33,8 +34,16 @@ namespace RoisLang.types
                 TypeckFunc(func);
         }
 
+        private void TypeckExternFunc(Func f)
+        {
+            // void arguments in extern functions don't really make sense
+            Debug.Assert(!f.Arguments.Any(x => x.Item2.IsVoid));
+            // TODO: more type-checks once more complex types are supported
+        }
+
         private void TypeckFunc(Func f)
         {
+            if (f.Extern) { TypeckExternFunc(f); return; }
             using var _ = Symbols.EnterNewScope();
             Ret = f.Ret;
             foreach (var (argName, argTy) in f.Arguments)
@@ -45,8 +54,17 @@ namespace RoisLang.types
             {
                 TypeckStmt(stmt);
             }
-            //if (!Ret.IsVoid && f.Body.Last() is not ReturnStmt)
-            //    throw new Exception("Non-void functions must end with a return statement");
+            if (!Ret.IsVoid && !CheckBlockReturns(f.Body))
+                throw new Exception("Non-void functions must end with a return statement");
+        }
+
+        private bool CheckBlockReturns(Stmt[] block)
+        {
+            if (block.Length == 0) return false;
+            if (block.Last() is ReturnStmt) return true;
+            if (block.Last() is IfStmt ifStmt)
+                return CheckBlockReturns(ifStmt.Then) && CheckBlockReturns(ifStmt.Else);
+            return false;
         }
 
         void TypeckStmt(Stmt stmt)

@@ -141,6 +141,15 @@ namespace RoisLang.parser
                     )
                );
 
+        private static readonly TokenListParser<Token, Func> ParseExternFuncDef =
+            Superpower.Parsers.Token.Sequence(
+                Token.KwExtern, Token.KwDef, Token.Sym, Token.LParen)
+            .Then((x) => FuncDefArgs.Then(funcArgs => Superpower.Parsers.Token.EqualTo(Token.RParen)
+                    .IgnoreThen(RetType)
+                    .Then(retType => Superpower.Parsers.Token.EqualTo(Token.Nl)
+                    .Value(new Func(x[2].ToStringValue(), funcArgs, Array.Empty<Stmt>(), retType, true)))));
+
+
         private static readonly TokenListParser<Token, (TypeRef, string)> ParseField =
             Superpower.Parsers.Token.EqualTo(Token.KwVal)
             .IgnoreThen(Superpower.Parsers.Token.EqualTo(Token.Sym))
@@ -161,7 +170,7 @@ namespace RoisLang.parser
         private static readonly TokenListParser<Token, ast.Program> ParseProgram =
             Superpower.Parsers.Token.EqualTo(Token.Nl).Optional()
             .IgnoreThen(
-                ParseClassDef.Select(x => (object)x).Or(ParseFuncDef.Select(x => (object)x))
+                ParseClassDef.Select(x => (object)x).Or(ParseFuncDef.Or(ParseExternFuncDef).Select(x => (object)x))
                 .Then(x => Superpower.Parsers.Token.EqualTo(Token.Nl).Optional().Value(x))
                 .Many()
                 .Select(xs => 

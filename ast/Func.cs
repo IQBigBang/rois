@@ -10,16 +10,21 @@ namespace RoisLang.ast
     public class Func
     {
         public string Name;
+        /// <summary>
+        /// Extern functions don't have a Body
+        /// </summary>
+        public bool Extern;
         public (string, TypeRef)[] Arguments;
         public TypeRef Ret;
         public Stmt[] Body;
 
-        public Func(string name, (string, TypeRef)[] arguments, Stmt[] body, TypeRef ret)
+        public Func(string name, (string, TypeRef)[] arguments, Stmt[] body, TypeRef ret, bool @extern = false)
         {
             Name = name;
             Arguments = arguments;
             Body = body;
             Ret = ret;
+            Extern = @extern;
         }
     }
 

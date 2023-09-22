@@ -14,10 +14,13 @@ namespace RoisLang.asm
             StructLayout structLayout = new();
             output.WriteLine("\tdefault rel");
             foreach (var func in funcs)
-                output.WriteLine($"global {func.Name}");
+            {
+                if (func.IsExtern) output.WriteLine($"extern {func.Name}");
+                else output.WriteLine($"global {func.Name}");
+            }
             output.WriteLine("section .text");
             output.WriteLine();
-            foreach (var func in funcs)
+            foreach (var func in funcs.Where(f => !f.IsExtern))
             {
                 CompileFunc(output, func, structLayout);
                 output.WriteLine();
