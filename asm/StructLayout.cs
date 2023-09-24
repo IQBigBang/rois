@@ -10,15 +10,20 @@ namespace RoisLang.asm
 {
     public class StructLayout
     {
-        // (size, align)
+        // (align, size)
         Dictionary<ClassType, (int, int)> TypeInfo = new();
         Dictionary<ClassType, List<int>> FieldOffsets = new();
 
         public int GetFieldOffset(FieldInfo fi)
         {
-            if (!FieldOffsets.ContainsKey(fi.Class))
-                CalcOffsetsFor(fi.Class);
+            CalculateReprFor(fi.Class);
             return FieldOffsets[fi.Class][fi.FieldN];
+        }
+
+        public int GetTypeSizeForAllocation(ClassType cls)
+        {
+            CalculateReprFor(cls);
+            return TypeInfo[cls].Item2;
         }
 
         public void CalculateReprFor(ClassType cls)

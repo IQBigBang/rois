@@ -2,6 +2,7 @@
 using RoisLang.asm;
 using RoisLang.lower;
 using RoisLang.mid_ir;
+using RoisLang.opt;
 using RoisLang.parser;
 using RoisLang.types;
 
@@ -59,19 +60,93 @@ def fib(n: int) -> int:
     if n == 1:
         return 1
     return fib(n - 1) + fib(n - 2)
+
+def fib2(n: int) -> int:
+    if n <= 1:
+        return 1
+    else:
+        return fib(n - 1) + fib(n - 2)
+
+def cftest(n: int) -> int:
+    if 1 == 2:
+        return n
+    return 3*2*1
+
+def branchtest(cond: bool, n: int) -> int:
+    let x = 0
+    if cond:
+        x = 1
+    else:
+        x = 2
+    return n * x
+";
+
+string test8 =
+@"
+class Point:
+    val x: int
+    val y: int
+
+class IntList:
+    val head: int
+    val tail: IntList
+
+def swap(p: Point):
+    let temp = p.x
+    p.x = p.y
+    p.y = temp
+
+def second(list: IntList) -> int:
+    return list.tail.head
+
+def nested(x: int) -> int:
+    if x == 0:
+        return 1
+    else if x == 1:
+        return 2
+    else if x == 2:
+        return 4
+    else if x == 3:
+        return 8
+    else:
+        return 100
+";
+
+string test9 =
+@"
+extern def magic_func(x: int, y: int) -> int
+def test(x: int) -> int:
+    return magic_func(magic_func(x, x), magic_func(x, x))
+";
+
+string test10 =
+@"
+extern def print_int(x: int)
+class Point:
+    val x: int
+    val y: int
+
+def main() -> int:
+    let p = new Point(x: 2, y: 3)
+    print_int(p.x)
+    print_int(p.y)
+    return 0
 ";
 
 //var tokens = Lexer.TokenizeString(test3);
-var program = Parser.LexAndParse(test7);
+var program = Parser.LexAndParse(test10);
 new TypeChecker().TypeckProgram(program);
 var lowerer = new AstLowerer();
 var midFuncs = lowerer.LowerProgram(program);
+// opt passes
+midFuncs.ForEach(x => ((IPass)new ConstantFold()).RunOnFunction(x));
+midFuncs.ForEach(x => new RemoveDeadCode().RunOnFunction(x));
 midFuncs.ForEach(x => x.Dump());
 Console.WriteLine();
 /*foreach (var stmt in parseResult)
     lowerer.LowerStmt(stmt);*/
 //new RegAlloc().RegAllocBlock(lowerer.GetBlock());
-var output = File.Open("output.nasm", FileMode.Create);
+var output = File.Open("../../../out/output.nasm", FileMode.Create);
 AsmCompile.CompileAllFuncs(new StreamWriter(output, System.Text.Encoding.UTF8)/*Console.Out*/, midFuncs);
 output.Close();
 

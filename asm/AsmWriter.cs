@@ -128,7 +128,8 @@ namespace RoisLang.asm
                             var regValue = iMulInstr.Lhs.IsReg ? iMulInstr.Lhs : iMulInstr.Rhs;
                             // imul out, reg, imm
                             WriteLn("imul {b32}, {b32}, {b32}", iMulInstr.Out, regValue, intValue.ToString());
-                        } else
+                        }
+                        else
                         {
                             // both are registers -> do the same thing as with addition
                             // mov out, lhs; imul out, rhs
