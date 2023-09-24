@@ -322,4 +322,24 @@ namespace RoisLang.mid_ir
             Console.WriteLine($"Store {FieldInfo} {Object}, {Value}");
         }
     }
+
+    public class MidAllocClassInstr : MidInstr
+    {
+        public ClassType Class;
+        public MidValue Out;
+
+        public override bool HasOut() => true;
+        public override void SetOut(MidValue val) => Out = val;
+        public override MidValue GetOut() => Out;
+        public override TypeRef OutType() => Class;
+        public override IEnumerable<MidValue> AllArgs() { yield return Out; }
+        public override void Map(Func<MidValue, MidValue> map)
+        {
+            Out = map(Out);
+        }
+        public override void Dump()
+        {
+            Console.WriteLine($"{Out} = AllocClass {Class}");
+        }
+    }
 }

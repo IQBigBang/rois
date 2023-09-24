@@ -111,5 +111,11 @@ namespace RoisLang.mid_ir.builder
             var instr = new MidStoreInstr { FieldInfo = fieldInfo, Object = obj, Value = val };
             currentBlock!.AddInstr(instr, IncrementPos);
         }
+
+        public MidValue BuildAllocClass(ClassType cls)
+        {
+            var instr = new MidAllocClassInstr { Class = cls, Out = MidValue.Null() };
+            return currentBlock!.AddInstr(instr, IncrementPos);
+        }
     }
 }

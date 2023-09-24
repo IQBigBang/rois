@@ -107,6 +107,16 @@ namespace RoisLang.lower
                         var obj = LowerExpr(memberExpr.Object);
                         return Builder.BuildLoad(obj, memberExpr.MemberName);
                     }
+                case ConstructorExpr constrExpr:
+                    {
+                        var instance = Builder.BuildAllocClass(constrExpr.Class);
+                        foreach (var (fieldName, fieldExpr) in constrExpr.Fields)
+                        {
+                            var fieldValue = LowerExpr(fieldExpr);
+                            Builder.BuildStore(instance, fieldValue, fieldName);
+                        }
+                        return instance;
+                    }
                 default:
                     throw new NotImplementedException();
             }

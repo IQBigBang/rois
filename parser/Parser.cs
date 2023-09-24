@@ -18,11 +18,26 @@ namespace RoisLang.parser
               .Or(Superpower.Parsers.Token.EqualToValue(Token.Sym, "bool").Value(TypeRef.BOOL))
               .Or(Superpower.Parsers.Token.EqualTo(Token.Sym).Select(name => (TypeRef)typeBuilder!.GetClassType(name.ToStringValue())));
 
+        private static readonly TokenListParser<Token, KeyValuePair<string, Expr>> ConstructorArg =
+            Superpower.Parsers.Token.EqualTo(Token.Sym)
+            .Then(name => Superpower.Parsers.Token.EqualTo(Token.Colon)
+                          .IgnoreThen(Lazy(GetExpr))
+                          .Select(expr => KeyValuePair.Create(name.ToStringValue(), expr)));
+
+        private static readonly TokenListParser<Token, Expr> Constructor =
+            Superpower.Parsers.Token.EqualTo(Token.KwNew)
+            .IgnoreThen(Superpower.Parsers.Token.EqualTo(Token.Sym).Select(name => typeBuilder!.GetClassType(name.ToStringValue())))
+            .Then(classType => Superpower.Parsers.Token.EqualTo(Token.LParen)
+                        .IgnoreThen(ConstructorArg.ManyDelimitedBy(Superpower.Parsers.Token.EqualTo(Token.Comma)))
+                        .Then(arguments => Superpower.Parsers.Token.EqualTo(Token.RParen)
+                                    .Value((Expr)new ConstructorExpr(classType, new Dictionary<string, Expr>(arguments)))));
+
         private static readonly TokenListParser<Token, Expr> Atom =
             Superpower.Parsers.Token.EqualTo(Token.Int).Select(s => (Expr)new IntExpr(int.Parse(s.ToStringValue())))
             .Or(Superpower.Parsers.Token.EqualTo(Token.Sym).Select(s => (Expr)new VarExpr(s.ToStringValue())))
             .Or(Superpower.Parsers.Token.EqualTo(Token.KwTrue).Value((Expr)new BoolLit(true)))
             .Or(Superpower.Parsers.Token.EqualTo(Token.KwFalse).Value((Expr)new BoolLit(false)))
+            .Or(Constructor)
             // `Lazy` must be used to add a level of indirection (because the `Expr` field is not initialized at the moment)
             .Or(Lazy(GetExpr).Between(Superpower.Parsers.Token.EqualTo(Token.LParen), Superpower.Parsers.Token.EqualTo(Token.RParen)));
 
