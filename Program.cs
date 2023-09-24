@@ -146,8 +146,8 @@ Console.WriteLine();
 /*foreach (var stmt in parseResult)
     lowerer.LowerStmt(stmt);*/
 //new RegAlloc().RegAllocBlock(lowerer.GetBlock());
-var output = File.Open("../../../out/output.nasm", FileMode.Create);
-AsmCompile.CompileAllFuncs(new StreamWriter(output, System.Text.Encoding.UTF8)/*Console.Out*/, midFuncs);
+var output = File.Open("output.nasm", FileMode.Create);
+AsmCompile.CompileModule(new StreamWriter(output, System.Text.Encoding.UTF8)/*Console.Out*/, midFuncs);
 output.Close();
 
 

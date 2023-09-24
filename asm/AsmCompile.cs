@@ -9,18 +9,18 @@ namespace RoisLang.asm
 {
     public class AsmCompile
     {
-        public static void CompileAllFuncs(TextWriter output, IEnumerable<MidFunc> funcs)
+        public static void CompileModule(TextWriter output, MidModule mod)
         {
             StructLayout structLayout = new();
             output.WriteLine("\tdefault rel");
-            foreach (var func in funcs)
+            foreach (var func in mod.Functions)
             {
                 if (func.IsExtern) output.WriteLine($"extern {func.Name}");
                 else output.WriteLine($"global {func.Name}");
             }
             output.WriteLine("section .text");
             output.WriteLine();
-            foreach (var func in funcs.Where(f => !f.IsExtern))
+            foreach (var func in mod.Functions.Where(f => !f.IsExtern))
             {
                 CompileFunc(output, func, structLayout);
                 output.WriteLine();

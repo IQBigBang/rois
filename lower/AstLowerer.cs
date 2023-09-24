@@ -23,7 +23,7 @@ namespace RoisLang.lower
             Symbols = new ScopedDictionary<string, MidValue>();
         }
 
-        public List<MidFunc> LowerProgram(ast.Program program)
+        public MidModule LowerProgram(ast.Program program)
         {
             Symbols.Reset();
             List<MidFunc> midFuncs = new();
@@ -37,7 +37,7 @@ namespace RoisLang.lower
             }
             for (int i = 0; i < program.Functions.Length; i++)
                 LowerFunc(program.Functions[i], midFuncs[i]);
-            return midFuncs;
+            return new MidModule(midFuncs, program.Classes.Select(x => x.Type!).ToList());
         }
 
         private void LowerFunc(Func f, MidFunc target)
