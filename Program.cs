@@ -66,13 +66,13 @@ var program = Parser.LexAndParse(test7);
 new TypeChecker().TypeckProgram(program);
 var lowerer = new AstLowerer();
 var midFuncs = lowerer.LowerProgram(program);
-midFuncs.ForEach(x => x.Dump());
+midFuncs.Functions.ForEach(x => x.Dump());
 Console.WriteLine();
 /*foreach (var stmt in parseResult)
     lowerer.LowerStmt(stmt);*/
 //new RegAlloc().RegAllocBlock(lowerer.GetBlock());
 var output = File.Open("output.nasm", FileMode.Create);
-AsmCompile.CompileAllFuncs(new StreamWriter(output, System.Text.Encoding.UTF8)/*Console.Out*/, midFuncs);
+AsmCompile.CompileModule(new StreamWriter(output, System.Text.Encoding.UTF8)/*Console.Out*/, midFuncs);
 output.Close();
 
 

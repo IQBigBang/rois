@@ -34,6 +34,7 @@ namespace RoisLang.types
                 if (k.Item2 == true) throw new Exception("Double definition of class");
                 k.Item1.Fields = cls.Fields.Select(x => (x.Item2, x.Item1)).ToArray();
                 classes[cls.Name] = (k.Item1, true);
+                cls.Type = k.Item1;
             }
 
             foreach (var k in classes)

@@ -32,6 +32,7 @@ namespace RoisLang.ast
     {
         public string Name;
         public (TypeRef, string)[] Fields;
+        public ClassType? Type;
 
         public ClassDef(string name, (TypeRef, string)[] fields)
         {

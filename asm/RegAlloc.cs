@@ -42,9 +42,9 @@ namespace RoisLang.asm
                 }
 
                 // if the instruction requires it, write LiveReg data
-                if (i > -1 && block.Instrs[i] != null && block.Instrs[i].RequiresLiveRegData)
+                if (i > -1 && block.Instrs[i] != null && block.Instrs[i]!.RequiresLiveRegData)
                 {
-                    block.Instrs[i].extra = new LiveRegData(allRegisters.Where(x => !freeRegisters.Contains(x)).ToList());
+                    block.Instrs[i]!.extra = new LiveRegData(allRegisters.Where(x => !freeRegisters.Contains(x)).ToList());
                 }
 
                 // then, assign new registers
