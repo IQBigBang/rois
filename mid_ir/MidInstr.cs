@@ -277,6 +277,7 @@ namespace RoisLang.mid_ir
             : this(class_, Array.FindIndex(class_.Fields, x => x.Item1 == fieldName)) { }
         public override string ToString() => $"{Class}.{Class.Fields[FieldN].Item1}";
         public TypeRef FieldType() => Class.Fields[FieldN].Item2;
+        public string FieldName() => Class.Fields[FieldN].Item1;
     }
 
     public class MidLoadInstr : MidInstr

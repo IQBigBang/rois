@@ -180,6 +180,20 @@ namespace RoisLang.types
                         }
                     }
                     break;
+                case ConstructorExpr constrExpr:
+                    {
+                        if (constrExpr.Fields.Count != constrExpr.Class.Fields.Length)
+                            throw new Exception("All fields must be initialized");
+                        for (int i = 0; i < constrExpr.Fields.Count; ++i)
+                        {
+                            var (fieldName, fieldType) = constrExpr.Class.Fields[i];
+                            var fieldExpr = constrExpr.Fields.GetValueOrDefault(fieldName) ?? throw new Exception("Uninitialized fields");
+                            if (!TypeckExpr(fieldExpr).Equal(fieldType))
+                                throw new Exception("Invalid type of field");
+                        }
+                        constrExpr.Ty = constrExpr.Class;
+                    }
+                    break;
                 default:
                     throw new NotImplementedException();
             }
