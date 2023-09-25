@@ -191,7 +191,7 @@ namespace RoisLang.types
                             if (!TypeckExpr(fieldExpr).Equal(fieldType))
                                 throw new Exception("Invalid type of field");
                         }
-                        constrExpr.Ty = constrExpr.Class;    
+                        constrExpr.Ty = constrExpr.Class;
                     }
                     break;
                 default:

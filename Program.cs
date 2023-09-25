@@ -1,6 +1,8 @@
 ﻿// See https://aka.ms/new-console-template for more information
 using RoisLang.asm;
+using RoisLang.asm.c;
 using RoisLang.lower;
+using RoisLang.opt;
 using RoisLang.mid_ir;
 using RoisLang.opt;
 using RoisLang.parser;
@@ -139,15 +141,16 @@ new TypeChecker().TypeckProgram(program);
 var lowerer = new AstLowerer();
 var midFuncs = lowerer.LowerProgram(program);
 // opt passes
-midFuncs.ForEach(x => ((IPass)new ConstantFold()).RunOnFunction(x));
-midFuncs.ForEach(x => new RemoveDeadCode().RunOnFunction(x));
-midFuncs.ForEach(x => x.Dump());
+midFuncs.Functions.ForEach(x => ((IPass)new ConstantFold()).RunOnFunction(x));
+midFuncs.Functions.ForEach(x => new RemoveDeadCode().RunOnFunction(x));
+midFuncs.Functions.ForEach(x => x.Dump());
 Console.WriteLine();
 /*foreach (var stmt in parseResult)
     lowerer.LowerStmt(stmt);*/
 //new RegAlloc().RegAllocBlock(lowerer.GetBlock());
-var output = File.Open("output.nasm", FileMode.Create);
-AsmCompile.CompileModule(new StreamWriter(output, System.Text.Encoding.UTF8)/*Console.Out*/, midFuncs);
+var output = File.Open("../../../out/output.c", FileMode.Create);
+new CCompile(new StreamWriter(output, System.Text.Encoding.UTF8)).CompileModule(midFuncs);
+//AsmCompile.CompileModule(new StreamWriter(output, System.Text.Encoding.UTF8)/*Console.Out*/, midFuncs);
 output.Close();
 
 
