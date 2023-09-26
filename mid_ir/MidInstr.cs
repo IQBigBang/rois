@@ -149,6 +149,8 @@ namespace RoisLang.mid_ir
         public MidValue Callee;
         public MidValue[] Arguments;
 
+        public bool IsDirect => Callee.IsGlobal;
+
         public override bool HasOut() => !OutType().IsVoid;
         public override void SetOut(MidValue val) { if (HasOut()) Out = val; }
         public override MidValue GetOut() => Out;
@@ -169,7 +171,8 @@ namespace RoisLang.mid_ir
         {
             if (!Out.IsNull)
                 Console.Write($"{Out} = ");
-            Console.Write($"Call {Callee}");
+            if (!IsDirect) Console.Write($"CallIndirect {Callee}");
+            else Console.Write($"Call {Callee}");
             for (int i = 0; i < Arguments.Length; i++)
             {
                 Console.Write($", {Arguments[i]}");
