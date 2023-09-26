@@ -25,7 +25,7 @@ namespace RoisLang.asm.c
 
             // First the type definitions
             foreach (var cls in module.Classes)
-                _out.WriteLine($"typedef struct struct_{cls.Name}* c_{cls.Name};");
+                _out.WriteLine($"typedef struct struct_{cls.Name}* {NameMangle.NameType(cls)};");
             foreach (var cls in module.Classes)
             {
                 _out.WriteLine($"struct struct_{cls.Name} {{");
@@ -36,8 +36,14 @@ namespace RoisLang.asm.c
             // Function declarations
             foreach (var func in module.Functions) {
                 var ftype = (FuncType)func.FuncType;
-                if (func.IsExtern) _out.Write("extern ");
-                _out.Write($"{PrintTy(ftype.Ret)} {func.Name}(");
+                if (func.IsExtern)
+                {  // foreign function names are not mangled
+                    if (func.Name.StartsWith("GF_") || func.Name.StartsWith("GV_") || func.Name.StartsWith("T_") || func.Name.StartsWith("F_"))
+                        Console.WriteLine("warning: extern function name could collide with mangled name");
+                    _out.Write($"extern {PrintTy(ftype.Ret)} {func.Name}(");
+                } else { 
+                    _out.Write($"{PrintTy(ftype.Ret)} {NameMangle.GlobalName(func)}(");
+                }
                 for (int i = 0; i < ftype.Args.Count; i++)
                 {
                     if (i != 0) _out.Write(", ");
@@ -55,7 +61,7 @@ namespace RoisLang.asm.c
             if (func.IsExtern) return;
             currentFunc = func;
             var ftype = (FuncType)func.FuncType;
-            _out.Write($"{PrintTy(ftype.Ret)} {func.Name}(");
+            _out.Write($"{PrintTy(ftype.Ret)} {NameMangle.GlobalName(func)}(");
             for (int i = 0; i < ftype.Args.Count; i++)
             {
                 if (i != 0) _out.Write(", ");
@@ -185,14 +191,6 @@ namespace RoisLang.asm.c
             throw new NotSupportedException();
         }
 
-        private string PrintTy(TypeRef ty)
-            => ty switch
-            {
-                IntType => "I32",
-                BoolType => "bool",
-                VoidType => "void", // TODO
-                ClassType cls => $"c_{cls.Name}",
-                _ => throw new NotImplementedException()
-            };
+        private string PrintTy(TypeRef ty) => NameMangle.NameType(ty);
     }
 }

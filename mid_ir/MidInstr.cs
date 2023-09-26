@@ -37,7 +37,7 @@ namespace RoisLang.mid_ir
     }
 
     public abstract class InstrExtraData { }
-    public class LiveRegData : InstrExtraData
+    /*public class LiveRegData : InstrExtraData
     {
         /// <summary>
         /// Which registers are live and need to be preserved through this instruction.
@@ -45,7 +45,7 @@ namespace RoisLang.mid_ir
         /// </summary>
         public readonly List<asm.GpReg> LiveRegisters;
         public LiveRegData(List<asm.GpReg> liveRegisters) {  LiveRegisters = liveRegisters; }
-    }
+    }*/
 
     public class MidIAddInstr : MidInstr
     {
