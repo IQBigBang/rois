@@ -66,6 +66,7 @@ namespace RoisLang.parser
         KwExtern,
         KwNew,
         KwFun,
+        KwInclude,
     }
 
     public class Lexer
@@ -183,6 +184,8 @@ namespace RoisLang.parser
                 }
 
             }
+            // if there's not a newline add the end, add it
+            if (tokens.Last().Kind != Token.Nl) tokens.Add(new Superpower.Model.Token<Token>(Token.Nl, Span(0)));
             // at the end, before EOI, emit a sufficient amount of dedents
             while (currentIndent > 0)
             {
@@ -259,6 +262,8 @@ namespace RoisLang.parser
                 tokens.Add(SimpleToken(Token.KwNew, 3));
             else if (s == "fun")
                 tokens.Add(SimpleToken(Token.KwFun, 3));
+            else if (s == "include")
+                tokens.Add(SimpleToken(Token.KwInclude, 7));
             else
                 tokens.Add(SimpleToken(Token.Sym, len));
         }

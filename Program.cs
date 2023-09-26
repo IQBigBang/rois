@@ -151,7 +151,7 @@ extern def use(x: ptr)
 ";
 
 //var tokens = Lexer.TokenizeString(test3);
-var program = Parser.LexAndParse(test11);
+var program = MultiParser.Parse("../../../out/main.ro");
 new TypeChecker().TypeckProgram(program);
 var lowerer = new AstLowerer();
 var midFuncs = lowerer.LowerProgram(program);
