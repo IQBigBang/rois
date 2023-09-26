@@ -6,8 +6,8 @@ using System.Threading.Tasks;
 
 namespace RoisLang.types
 {
-    public class IntType : TypeRef
+    internal class PtrType : TypeRef
     {
-        public override string ToString() => "int";
+        public override string ToString() => "ptr";
     }
 }

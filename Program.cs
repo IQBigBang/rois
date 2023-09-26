@@ -144,6 +144,9 @@ def add(x: int) -> int:
 
 def main() -> int:
     return apply(add, 41)
+
+extern def get() -> ptr
+extern def use(x: ptr)
 ";
 
 //var tokens = Lexer.TokenizeString(test3);

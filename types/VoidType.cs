@@ -8,10 +8,6 @@ namespace RoisLang.types
 {
     public class VoidType : TypeRef
     {
-        public override bool IsVoid => true;
-        public override bool IsInt => false;
-        public override bool IsFunc => false;
-
         public override string ToString() => "void";
     }
 }
