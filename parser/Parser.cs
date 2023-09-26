@@ -13,9 +13,22 @@ namespace RoisLang.parser
     {
         private static TypeBuilder? typeBuilder;
 
+        private static readonly TokenListParser<Token, TypeRef> FunTypeName
+            = Superpower.Parsers.Token.EqualTo(Token.KwFun)
+              .IgnoreThen(Superpower.Parsers.Token.EqualTo(Token.LParen))
+              .IgnoreThen(Lazy(GetTypeName).ManyDelimitedBy(Superpower.Parsers.Token.EqualTo(Token.Comma)))
+              .Then(args => Superpower.Parsers.Token.EqualTo(Token.RParen)
+                            .IgnoreThen(Superpower.Parsers.Token.EqualTo(Token.Arrow)
+                                        .IgnoreThen(Lazy(GetTypeName))
+                                        .OptionalOrDefault(TypeRef.VOID))
+                            .Select(ret => (TypeRef)FuncType.New(args.ToList(), ret)));
+
+        private static TokenListParser<Token, TypeRef> GetTypeName() { return TypeName; }
+
         private static readonly TokenListParser<Token, TypeRef> TypeName
             = Superpower.Parsers.Token.EqualToValue(Token.Sym, "int").Value(TypeRef.INT)
               .Or(Superpower.Parsers.Token.EqualToValue(Token.Sym, "bool").Value(TypeRef.BOOL))
+              .Or(FunTypeName)
               .Or(Superpower.Parsers.Token.EqualTo(Token.Sym).Select(name => (TypeRef)typeBuilder!.GetClassType(name.ToStringValue())));
 
         private static readonly TokenListParser<Token, KeyValuePair<string, Expr>> ConstructorArg =

@@ -134,8 +134,20 @@ def main() -> int:
     return 0
 ";
 
+string test11 =
+@"
+def apply(f: fun(int) -> int, x: int) -> int:
+    return f(x)
+
+def add(x: int) -> int:
+    return x + 1
+
+def main() -> int:
+    return apply(add, 41)
+";
+
 //var tokens = Lexer.TokenizeString(test3);
-var program = Parser.LexAndParse(test10);
+var program = Parser.LexAndParse(test11);
 new TypeChecker().TypeckProgram(program);
 var lowerer = new AstLowerer();
 var midFuncs = lowerer.LowerProgram(program);

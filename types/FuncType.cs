@@ -52,5 +52,7 @@ namespace RoisLang.types
         {
             return "fn(" + string.Join(',', Args) + ") -> " + Ret;
         }
+
+        public static IEnumerable<FuncType> AllFuncTypes => _functions;
     }
 }

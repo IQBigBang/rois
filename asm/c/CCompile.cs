@@ -22,7 +22,21 @@ namespace RoisLang.asm.c
         {
             _out.WriteLine("#include \"std/core.h\"");
             _out.WriteLine("#include \"std/alloc.h\"");
-
+            
+            // Function types
+            foreach (var ftype in FuncType.AllFuncTypes)
+            {
+                _out.WriteLine("typedef struct {");
+                _out.Write($"{PrintTy(ftype.Ret)} (*fptr)(");
+                for (int i = 0; i < ftype.Args.Count; i++)
+                {
+                    if (i != 0) _out.Write(", ");
+                    _out.Write(PrintTy(ftype.Args[i]));
+                }
+                _out.WriteLine(");");
+                _out.WriteLine("void* env;");
+                _out.WriteLine($"}} {PrintTy(ftype)};");
+            }
             // First the type definitions
             foreach (var cls in module.Classes)
                 _out.WriteLine($"typedef struct struct_{cls.Name}* {NameMangle.NameType(cls)};");
@@ -109,14 +123,32 @@ namespace RoisLang.asm.c
                     else _out.WriteLine("return;");
                     break;
                 case MidCallInstr callInstr:
-                    if (!callInstr.Out.IsNull) _out.Write($"{Declare(callInstr.Out)} = ");
-                    _out.Write($"({Print(callInstr.Callee)})(");
+                    string outPrefix = "";
+                    string savedEnvName = "";
+                    if (!callInstr.Out.IsNull) outPrefix = $"{Declare(callInstr.Out)} = ";
+                    if (callInstr.IsDirect)
+                    {
+                        // just invoke directly the global function
+                        // except (!) extern function names are unmangled
+                        if (callInstr.Callee.GetGlobalValue().IsExtern) _out.Write(outPrefix + callInstr.Callee.GetGlobalValue().Name + "(");
+                        else _out.Write(outPrefix + NameMangle.GlobalName(callInstr.Callee.GetGlobalValue()) + "(");
+                    } else
+                    {
+                        // invoke a closure
+                        savedEnvName = "saved_env" + Rnd();
+                        _out.WriteLine($"void* {savedEnvName} = CLOENV;");
+                        _out.WriteLine($"CLOENV = {Print(callInstr.Callee)}.env;");
+                        _out.Write($"{outPrefix}({Print(callInstr.Callee)}.fptr)(");
+                    }
                     for (int i = 0; i < callInstr.Arguments.Length; i++)
                     {
                         if (i != 0) _out.Write(", ");
                         _out.Write(Print(callInstr.Arguments[i]));
                     }
                     _out.WriteLine(");");
+                    // restore cloenv
+                    if (!callInstr.IsDirect)
+                        _out.WriteLine($"CLOENV = {savedEnvName};");
                     break;
                 case MidICmpInstr icmpInstr:
                     _out.Write($"{Declare(icmpInstr.Out)} = ((I32){Print(icmpInstr.Lhs)}) ");
@@ -179,6 +211,8 @@ namespace RoisLang.asm.c
             }
         }
 
+        private string Rnd() => Random.Shared.Next(1000, 10000).ToString();
+
         private string Declare(MidValue val)
             => PrintTy(val.GetType()) + " " + Print(val);
 
@@ -186,8 +220,13 @@ namespace RoisLang.asm.c
         {
             if (val.IsConstInt) return $"((I32){val.GetIntValue()})";
             if (val.IsConstBool) return val.GetBoolValue() ? "true" : "false";
-            if (val.IsGlobal) return val.GetGlobalValue().Name;
-            if (val.IsReg) return $"_L{val.GetBasicBlock()}_{val.GetRegNum()}";
+            if (val.IsReg) return NameMangle.LocalName(val);
+            if (val.IsGlobal)
+            {
+                // If global values = global functions are used directly as values,
+                // the "closure value" must be returned instead (not just the direct function pointer)
+                return $"(({PrintTy(val.GetGlobalValue().FuncType)}){{{NameMangle.GlobalName(val.GetGlobalValue())}, null}})";
+            }
             throw new NotSupportedException();
         }
 
