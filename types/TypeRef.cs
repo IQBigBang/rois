@@ -8,9 +8,9 @@ namespace RoisLang.types
 {
     public abstract class TypeRef
     {
-        public abstract bool IsVoid { get; }
-        public abstract bool IsInt { get; }
-        public abstract bool IsFunc { get; }
+        public bool IsVoid => this is VoidType;
+        public bool IsInt => this is IntType;
+        public bool IsFunc => this is FuncType;
         public bool IsBool => this is BoolType;
         public bool IsClass => this is ClassType;
 
@@ -18,6 +18,7 @@ namespace RoisLang.types
         public static readonly TypeRef INT = new IntType();
         public static readonly TypeRef VOID = new VoidType();
         public static readonly TypeRef BOOL = new BoolType();
+        public static readonly TypeRef PTR = new PtrType();
 
         public override bool Equals(object? obj)
         {
@@ -31,6 +32,7 @@ namespace RoisLang.types
             if (IsVoid && other.IsVoid) return true;
             if (IsInt && other.IsInt) return true;
             if (IsBool && other.IsBool) return true;
+            if (this is PtrType && other is PtrType) return true;
             if (IsFunc && other.IsFunc)
             {
                 var this_ = (FuncType)this;
@@ -51,10 +53,6 @@ namespace RoisLang.types
 
     public class TypeUnknown : TypeRef
     {
-        public override bool IsVoid => false;
-        public override bool IsInt => false;
-        public override bool IsFunc => false;
-
         public override string ToString() => "typUnk";
     }
 }

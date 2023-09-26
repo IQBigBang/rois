@@ -28,6 +28,7 @@ namespace RoisLang.parser
         private static readonly TokenListParser<Token, TypeRef> TypeName
             = Superpower.Parsers.Token.EqualToValue(Token.Sym, "int").Value(TypeRef.INT)
               .Or(Superpower.Parsers.Token.EqualToValue(Token.Sym, "bool").Value(TypeRef.BOOL))
+              .Or(Superpower.Parsers.Token.EqualToValue(Token.Sym, "ptr").Value(TypeRef.PTR))
               .Or(FunTypeName)
               .Or(Superpower.Parsers.Token.EqualTo(Token.Sym).Select(name => (TypeRef)typeBuilder!.GetClassType(name.ToStringValue())));
 

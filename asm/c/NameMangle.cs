@@ -36,6 +36,7 @@ namespace RoisLang.asm.c
     /// * int32 = I
     /// * bool = B
     /// * void = V
+    /// * ptr = P
     /// * func = F{argcount}_{args}_{ret}
     /// * class = C{mangled_namespaced_name}
     /// 
@@ -76,6 +77,7 @@ namespace RoisLang.asm.c
                 IntType => "I32",
                 BoolType => "bool",
                 VoidType => "void", // TODO
+                PtrType => "PTR",
                 ClassType cls => $"T_{NamespacedName(cls.Name)}",
                 FuncType ft => MangleTypeAsPartOfName(ft), // the scheme is identical for function types (on purpose)
             };
@@ -91,6 +93,7 @@ namespace RoisLang.asm.c
             if (tr.IsVoid) return "V";
             if (tr.IsInt) return "I";
             if (tr.IsBool) return "B";
+            if (tr is PtrType) return "P";
             if (tr.IsFunc) {
                 var ftype = (FuncType)tr;
                 string s = "F" + ftype.Args.Count;

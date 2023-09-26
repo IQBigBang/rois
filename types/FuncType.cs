@@ -11,10 +11,6 @@ namespace RoisLang.types
         // function types often repeat, "intern" them for more efficiency
         private static List<FuncType> _functions = new();
 
-        public override bool IsVoid => false;
-        public override bool IsInt => false;
-        public override bool IsFunc => true;
-
         public readonly IReadOnlyList<TypeRef> Args;
         public readonly TypeRef Ret;
 

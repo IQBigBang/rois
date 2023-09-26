@@ -19,10 +19,6 @@ namespace RoisLang.types
 
         public override int GetHashCode() => Name.GetHashCode();
 
-        public override bool IsVoid => false;
-        public override bool IsInt => false;
-        public override bool IsFunc => false;
-
         public override string ToString() => "$" + Name;
     }
 }
