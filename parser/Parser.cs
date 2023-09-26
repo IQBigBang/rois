@@ -11,7 +11,13 @@ namespace RoisLang.parser
 {
     internal class Parser
     {
-        private static TypeBuilder? typeBuilder;
+        private TypeBuilder typeBuilder;
+        private static Parser? instance;
+
+        public Parser(TypeBuilder typeBuilder)
+        {
+            this.typeBuilder = typeBuilder;
+        }
 
         private static readonly TokenListParser<Token, TypeRef> FunTypeName
             = Superpower.Parsers.Token.EqualTo(Token.KwFun)
@@ -30,7 +36,7 @@ namespace RoisLang.parser
               .Or(Superpower.Parsers.Token.EqualToValue(Token.Sym, "bool").Value(TypeRef.BOOL))
               .Or(Superpower.Parsers.Token.EqualToValue(Token.Sym, "ptr").Value(TypeRef.PTR))
               .Or(FunTypeName)
-              .Or(Superpower.Parsers.Token.EqualTo(Token.Sym).Select(name => (TypeRef)typeBuilder!.GetClassType(name.ToStringValue())));
+              .Or(Superpower.Parsers.Token.EqualTo(Token.Sym).Select(name => (TypeRef)instance!.typeBuilder.GetClassType(name.ToStringValue())));
 
         private static readonly TokenListParser<Token, KeyValuePair<string, Expr>> ConstructorArg =
             Superpower.Parsers.Token.EqualTo(Token.Sym)
@@ -40,7 +46,7 @@ namespace RoisLang.parser
 
         private static readonly TokenListParser<Token, Expr> Constructor =
             Superpower.Parsers.Token.EqualTo(Token.KwNew)
-            .IgnoreThen(Superpower.Parsers.Token.EqualTo(Token.Sym).Select(name => typeBuilder!.GetClassType(name.ToStringValue())))
+            .IgnoreThen(Superpower.Parsers.Token.EqualTo(Token.Sym).Select(name => instance!.typeBuilder.GetClassType(name.ToStringValue())))
             .Then(classType => Superpower.Parsers.Token.EqualTo(Token.LParen)
                         .IgnoreThen(ConstructorArg.ManyDelimitedBy(Superpower.Parsers.Token.EqualTo(Token.Comma)))
                         .Then(arguments => Superpower.Parsers.Token.EqualTo(Token.RParen)
@@ -196,9 +202,15 @@ namespace RoisLang.parser
                 .Then(fields => Superpower.Parsers.Token.EqualTo(Token.Dedent)
                                 .Value(new ClassDef(className.ToStringValue(), fields))));
 
-        private static readonly TokenListParser<Token, ast.Program> ParseProgram =
+        private static readonly TokenListParser<Token, string> ParseInclude =
+             Superpower.Parsers.Token.EqualTo(Token.KwInclude)
+            .IgnoreThen(Superpower.Parsers.Token.EqualTo(Token.Sym))
+            .Then(fileName => Superpower.Parsers.Token.EqualTo(Token.Nl).Value(fileName.ToStringValue()));
+
+        private static readonly TokenListParser<Token, (string[], ast.Program)> ParseProgram =
             Superpower.Parsers.Token.EqualTo(Token.Nl).Optional()
-            .IgnoreThen(
+            .IgnoreThen(ParseInclude.Many())
+            .Then(includes =>
                 ParseClassDef.Select(x => (object)x).Or(ParseFuncDef.Or(ParseExternFuncDef).Select(x => (object)x))
                 .Then(x => Superpower.Parsers.Token.EqualTo(Token.Nl).Optional().Value(x))
                 .Many()
@@ -206,19 +218,18 @@ namespace RoisLang.parser
                 {
                     var classes = xs.Where(x => x is ClassDef).Select(x => (ClassDef)x).ToArray();
                     var funcs = xs.Where(x => x is Func).Select(x => (Func)x).ToArray();
-                    return new ast.Program(classes, funcs);
-                }));
+                    return (includes, new ast.Program(classes, funcs));
+                }))
+            .Then(x => Superpower.Parsers.Token.EqualTo(Token.Eoi).Value(x));
 
-        public static ast.Program LexAndParse(string s)
+        public (string[], ast.Program) LexAndParse(string s)
         {
+            instance = this;
             var tokens = Lexer.TokenizeString(s);
-            // ! this is important
-            typeBuilder = new TypeBuilder();
             var result = ParseProgram(new Superpower.Model.TokenList<Token>(tokens.ToArray()));
             if (!result.HasValue)
                 Console.WriteLine(result.FormatErrorMessageFragment());
-            // ! now fill in the types
-            typeBuilder.InitializeAll(result.Value.Classes);
+            instance = null;
             return result.Value;
         }
 
