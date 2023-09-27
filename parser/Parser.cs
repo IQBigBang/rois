@@ -138,8 +138,15 @@ namespace RoisLang.parser
                                               .OptionalOrDefault(Array.Empty<Stmt>())
                                               .Select(elseBlock => (Stmt)IfStmt.Build((cond, thenBlock), elseIfs, elseBlock)))));
 
+        private static readonly TokenListParser<Token, Stmt> ParseWhileStmt =
+            Superpower.Parsers.Token.EqualTo(Token.KwWhile)
+            .IgnoreThen(GetExpr())
+            .Then(cond => Superpower.Parsers.Token.Sequence(Token.Colon, Token.Nl)
+                          .IgnoreThen(GetBlock())
+                          .Select(block => (Stmt)new WhileStmt(cond, block)));
+
         private static readonly TokenListParser<Token, Stmt> ParseStmt =
-            LetStmt.Or(ReturnStmt).Or(ParseIfStmt).Or(AssignOrDiscardStmt);
+            LetStmt.Or(ReturnStmt).Or(ParseIfStmt).Or(ParseWhileStmt).Or(AssignOrDiscardStmt);
 
         private static readonly TokenListParser<Token, Stmt[]> Block =
             ParseStmt.Many().Between(Superpower.Parsers.Token.EqualTo(Token.Indent), Superpower.Parsers.Token.EqualTo(Token.Dedent));

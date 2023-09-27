@@ -202,6 +202,38 @@ namespace RoisLang.lower
                         // compilation of the rest can resume business-as-usual
                         return; 
                     }
+                case WhileStmt whileStmt:
+                    {
+                        // collect all locals
+                        var allLocals = GetAllLocals();
+                        var typesList = allLocals.Select(x => x.Value.GetType()).ToList();
+                        var bodyBlock = currentFunc!.NewBlock(typesList);
+                        var continueBlock = currentFunc!.NewBlock(typesList);
+                        // compile condition
+                        var cond = LowerExpr(whileStmt.Cond);
+                        var allLocalsNames = allLocals.Select(x => x.Key).ToList();
+                        var allLocalsValues = allLocals.Select(x => x.Value).ToArray();
+                        Builder.BuildBranch(cond, bodyBlock, allLocalsValues, continueBlock, allLocalsValues);
+                        // switch to body
+                        using (var _ = Symbols.EnterNewScope())
+                        {
+                            DoContextSwitch(allLocalsNames, bodyBlock);
+                            Builder.SwitchBlock(bodyBlock);
+                            foreach (var stmt1 in whileStmt.Body)
+                            {
+                                LowerStmt(stmt1);
+                            }
+                            // compile the condition (again)
+                            var cond1 = LowerExpr(whileStmt.Cond);
+                            var localsValues1 = allLocalsNames.Select(name => Symbols[name]).ToArray();
+                            Builder.BuildBranch(cond1, bodyBlock, localsValues1, continueBlock, localsValues1);
+                        }
+                        // now the continue block
+                        Symbols.ClearCurrentScope();
+                        DoContextSwitch(allLocalsNames, continueBlock);
+                        Builder.SwitchBlock(continueBlock);
+                        return;
+                    }
                 default:
                     throw new NotImplementedException();
             }

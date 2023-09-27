@@ -26,4 +26,5 @@ namespace RoisLang.ast
             return new IfStmt(If.Item1, If.Item2, tree);
         }
     }
+    public record WhileStmt(Expr Cond, Stmt[] Body) : Stmt();
 }
