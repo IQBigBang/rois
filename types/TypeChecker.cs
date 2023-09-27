@@ -110,6 +110,17 @@ namespace RoisLang.types
                         }
                         return;
                     }
+                case WhileStmt whileStmt:
+                    {
+                        var cond = TypeckExpr(whileStmt.Cond);
+                        if (!cond.IsBool) throw new Exception("Typechecking error");
+                        using (var _ = Symbols.EnterNewScope())
+                        {
+                            foreach (var stmt_ in whileStmt.Body) TypeckStmt(stmt_);
+                        }
+                        return;
+                    }
+
                 default:
                     throw new NotImplementedException();
             }
