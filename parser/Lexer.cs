@@ -67,6 +67,7 @@ namespace RoisLang.parser
         KwNew,
         KwFun,
         KwInclude,
+        KwWhile,
     }
 
     public class Lexer
@@ -172,6 +173,8 @@ namespace RoisLang.parser
                 }
                 else if (ch == '.')
                     tokens.Add(SimpleToken(Token.Dot, 1));
+                else if (ch == '/' && Pos + 1 < Source.Length && Source[Pos + 1] == '*')
+                    LexComment();
                 // symbols and numbers
                 else if (char.IsDigit(ch))
                     LexInt();
@@ -185,7 +188,7 @@ namespace RoisLang.parser
 
             }
             // if there's not a newline add the end, add it
-            if (tokens.Last().Kind != Token.Nl) tokens.Add(new Superpower.Model.Token<Token>(Token.Nl, Span(0)));
+            if (tokens.LastOrDefault().Kind != Token.Nl) tokens.Add(new Superpower.Model.Token<Token>(Token.Nl, Span(0)));
             // at the end, before EOI, emit a sufficient amount of dedents
             while (currentIndent > 0)
             {
@@ -193,6 +196,26 @@ namespace RoisLang.parser
                 currentIndent--;
             }
             tokens.Add(new Superpower.Model.Token<Token>(Token.Eoi, Span(0)));
+        }
+
+        private void LexComment()
+        {
+            // first two characters are '/*'
+            int lenComment = 2;
+            while (true)
+            {
+                if ((Pos + lenComment + 1) >= Source.Length)
+                {
+                    tokens.Add(SimpleToken(Token.Error, 1)); // unfinished comment
+                    return;
+                }
+                if (Source[Pos + lenComment] == '*' && Source[Pos + lenComment + 1] == '/')
+                {   // Finished
+                    Pos += lenComment + 2;
+                    return;
+                }
+                lenComment++;
+            }
         }
 
         // tokenize a newline + indentation
@@ -264,6 +287,8 @@ namespace RoisLang.parser
                 tokens.Add(SimpleToken(Token.KwFun, 3));
             else if (s == "include")
                 tokens.Add(SimpleToken(Token.KwInclude, 7));
+            else if (s == "while")
+                tokens.Add(SimpleToken(Token.KwWhile, 5));
             else
                 tokens.Add(SimpleToken(Token.Sym, len));
         }
