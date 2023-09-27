@@ -55,6 +55,11 @@ namespace RoisLang.ast
         public override bool IsValidLhs() => true;
     }
 
+    public record MethodCallExpr(Expr Object, string methodName, Expr[] Args) : Expr()
+    {
+        public override bool IsValidLhs() => false;
+    }
+
     public record ConstructorExpr(ClassType Class, Dictionary<string, Expr> Fields) : Expr()
     {
         public override bool IsValidLhs() => false;

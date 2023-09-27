@@ -12,11 +12,14 @@ namespace RoisLang.types
     public class TypeChecker
     {
         private ScopedDictionary<string, TypeRef> Symbols;
+        // this is for looking up methods
+        private Dictionary<ClassType, ClassDef> ClassesTable;
         private TypeRef? Ret;
 
         public TypeChecker()
         {
             Symbols = new ScopedDictionary<string, TypeRef>();
+            ClassesTable = new Dictionary<ClassType, ClassDef>();
             Ret = null;
         }
 
@@ -29,9 +32,20 @@ namespace RoisLang.types
                 if (Symbols.Contains(func.Name)) throw new Exception();
                 Symbols.AddNew(func.Name, ftype);
             }
+            foreach (var cls in program.Classes)
+                ClassesTable.Add(cls.Type!, cls);
             // type-check all functions
             foreach (var func in program.Functions)
                 TypeckFunc(func);
+            // type-check all methods
+            foreach (var cls in program.Classes)
+            {
+                // also make sure there are no duplicite names
+                if (cls.Methods.DistinctBy(cls => cls.Name).Count() != cls.Methods.Length)
+                    throw new Exception("Double definition of method");
+                foreach (var method in cls.Methods)
+                    TypeckFunc(method, cls);
+            }
         }
 
         private void TypeckExternFunc(Func f)
@@ -41,10 +55,11 @@ namespace RoisLang.types
             // TODO: more type-checks once more complex types are supported
         }
 
-        private void TypeckFunc(Func f)
+        private void TypeckFunc(Func f, ClassDef? self = null)
         {
             if (f.Extern) { TypeckExternFunc(f); return; }
             using var _ = Symbols.EnterNewScope();
+            if (self != null) Symbols.AddNew("self", self.Type!);
             Ret = f.Ret;
             foreach (var (argName, argTy) in f.Arguments)
             {
@@ -203,6 +218,26 @@ namespace RoisLang.types
                                 throw new Exception("Invalid type of field");
                         }
                         constrExpr.Ty = constrExpr.Class;
+                    }
+                    break;
+                case MethodCallExpr mCallExpr:
+                    {
+                        var obj = TypeckExpr(mCallExpr.Object);
+                        if (!obj.IsClass)
+                            throw new Exception("Typechecking error");
+                        var classDef = ClassesTable[(ClassType)obj];
+                        Func? method = null;
+                        foreach (var m in classDef.Methods)
+                            if (m.Name == mCallExpr.methodName) method = m;
+                        if (method == null) throw new Exception("Undefined method");
+                        // Now the ordinary Call check
+                        if (method.Arguments.Length != mCallExpr.Args.Length) throw new Exception("Typechecking error");
+                        for (int i = 0; i < method.Arguments.Length; i++)
+                        {
+                            if (!TypeckExpr(mCallExpr.Args[i]).Equal(method.Arguments[i].Item2))
+                                throw new Exception("Typechecking error");
+                        }
+                        mCallExpr.Ty = method.Ret;
                     }
                     break;
                 default:
