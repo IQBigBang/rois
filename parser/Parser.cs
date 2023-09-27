@@ -61,12 +61,19 @@ namespace RoisLang.parser
             // `Lazy` must be used to add a level of indirection (because the `Expr` field is not initialized at the moment)
             .Or(Lazy(GetExpr).Between(Superpower.Parsers.Token.EqualTo(Token.LParen), Superpower.Parsers.Token.EqualTo(Token.RParen)));
 
-        private static readonly TokenListParser<Token, Expr> Member = 
-            Atom.Chain(Superpower.Parsers.Token.EqualTo(Token.Dot), Superpower.Parsers.Token.EqualTo(Token.Sym),
-                (_, obj, name) => new MemberExpr(obj, name.ToStringValue()));
-
         private static readonly TokenListParser<Token, Expr[]> ExprArgs =
-            Lazy(GetExpr).ManyDelimitedBy(Superpower.Parsers.Token.EqualTo(Token.Comma));
+             Lazy(GetExpr).ManyDelimitedBy(Superpower.Parsers.Token.EqualTo(Token.Comma));
+
+        private static readonly TokenListParser<Token, Expr> Member =
+            Atom.Chain(Superpower.Parsers.Token.EqualTo(Token.Dot), 
+                Superpower.Parsers.Token.EqualTo(Token.Sym)
+                .Then(name => Superpower.Parsers.Token.EqualTo(Token.LParen)
+                                .IgnoreThen(ExprArgs)
+                                .Then(args => Superpower.Parsers.Token.EqualTo(Token.RParen).Value((Expr[]?)args))
+                                .OptionalOrDefault()
+                                .Select(args => Tuple.Create(name.ToStringValue(), args)))
+                , (_, obj, snd) => snd.Item2 == null ? new MemberExpr(obj, snd.Item1)
+                                                     : new MethodCallExpr(obj, snd.Item1, snd.Item2));
 
         private static readonly TokenListParser<Token, Expr> Call =
             Member.Then(atom => Superpower.Parsers.Token.EqualTo(Token.LParen)
@@ -206,8 +213,10 @@ namespace RoisLang.parser
             .Then(className =>
                 Superpower.Parsers.Token.Sequence(Token.Colon, Token.Nl, Token.Indent)
                 .IgnoreThen(ParseField.Many())
-                .Then(fields => Superpower.Parsers.Token.EqualTo(Token.Dedent)
-                                .Value(new ClassDef(className.ToStringValue(), fields))));
+                .Then(fields => ParseFuncDef.Many()
+                                .Then(methods => 
+                                    Superpower.Parsers.Token.EqualTo(Token.Dedent)
+                                    .Value(new ClassDef(className.ToStringValue(), fields, methods)))));
 
         private static readonly TokenListParser<Token, string> ParseInclude =
              Superpower.Parsers.Token.EqualTo(Token.KwInclude)

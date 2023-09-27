@@ -33,11 +33,13 @@ namespace RoisLang.ast
         public string Name;
         public (TypeRef, string)[] Fields;
         public ClassType? Type;
+        public Func[] Methods;
 
-        public ClassDef(string name, (TypeRef, string)[] fields)
+        public ClassDef(string name, (TypeRef, string)[] fields, Func[] methods)
         {
             Name = name;
             Fields = fields;
+            Methods = methods;
         }
     }
 
