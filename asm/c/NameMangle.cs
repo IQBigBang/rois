@@ -27,6 +27,7 @@ namespace RoisLang.asm.c
     /// Global symbols are split into functions, which start with GF and other static variables which start with GV.
     /// Global functions are mangled as: "GF_{mangled_namespaced_name}_{function_args}_{function_ret}"
     /// Global variables are mangled as: "GV_{mangled_namespaced_name}_{type}"
+    /// Methods are mangled as: "GM{mangled_namespaced_class_name}_{methodName}_{function_args}_{function_ret}"
     /// 
     /// 3. User-defined types
     /// User-defined types are mangled as: "T_{mangled_namespaced_name}" (similar to global symbols)
@@ -60,7 +61,14 @@ namespace RoisLang.asm.c
 
         public static string GlobalName(MidFunc func)
         {
-            string s = "GF_" + NamespacedName(func.Name);
+            string s;
+            if (func.IsMethod)
+            {
+                var arr = func.Name.Split('$');
+                s = "GM" + arr[0] + "_" + arr[1];
+            }
+            else
+                s = "GF_" + NamespacedName(func.Name);
             foreach (var arg in ((FuncType)func.FuncType).Args)
             {
                 var mangledArg = MangleTypeAsPartOfName(arg);

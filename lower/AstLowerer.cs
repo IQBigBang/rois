@@ -16,11 +16,13 @@ namespace RoisLang.lower
         private MidFunc? currentFunc;
         private MidBuilder Builder;
         private ScopedDictionary<string, MidValue> Symbols;
+        private Dictionary<ValueTuple<string, string>, MidValue> Methods;
 
         public AstLowerer()
         {
             Builder = new MidBuilder();
             Symbols = new ScopedDictionary<string, MidValue>();
+            Methods = new Dictionary<(string, string), MidValue>();
         }
 
         public MidModule LowerProgram(ast.Program program)
@@ -30,14 +32,32 @@ namespace RoisLang.lower
             foreach (var func in program.Functions)
             {
                 if (Symbols.Contains(func.Name)) throw new Exception();
-                var midFunc = new MidFunc(func.Name, func.Arguments.Select(x => x.Item2).ToList(), func.Ret, func.Extern);
+                var midFunc = new MidFunc(func.Name, func.Arguments.Select(x => x.Item2).ToList(), func.Ret, null, func.Extern);
                 midFuncs.Add(midFunc);
                 var value = MidValue.Global(midFunc, Assertion.X);
                 Symbols.AddNew(func.Name, value);
             }
+            foreach (var cls in program.Classes)
+            {
+                foreach (var method in cls.Methods)
+                {
+                    var args = new List<TypeRef> { cls.Type! }.Concat(method.Arguments.Select(x => x.Item2)).ToList();
+                    var midFunc = new MidFunc($"{cls.Name}${method.Name}", args, method.Ret, cls.Type);
+                    var value = MidValue.Global(midFunc, Assertion.X);
+                    Methods[(cls.Name, method.Name)] = value;
+                }
+            }
             for (int i = 0; i < program.Functions.Length; i++)
                 LowerFunc(program.Functions[i], midFuncs[i]);
-            return new MidModule(midFuncs, program.Classes.Select(x => x.Type!).ToList());
+            foreach (var cls in program.Classes)
+            {
+                foreach (var method in cls.Methods)
+                {
+                    LowerFunc(method, Methods[(cls.Name, method.Name)].GetGlobalValue());
+                } 
+            }
+            return new MidModule(Methods.Select(x => x.Value.GetGlobalValue()).Concat(midFuncs).ToList(), 
+                program.Classes.Select(x => x.Type!).ToList());
         }
 
         private void LowerFunc(Func f, MidFunc target)
@@ -46,10 +66,21 @@ namespace RoisLang.lower
             currentFunc = target;
             Builder.SwitchBlock(target.EntryBlock);
             using var _ = Symbols.EnterNewScope();
-            // add arguments
-            for (int i = 0; i < f.Arguments.Length; i++)
+            if (target.IsMethod)
             {
-                Symbols.AddNew(f.Arguments[i].Item1, target.EntryBlock.Argument(i));
+                Symbols.AddNew("self", target.EntryBlock.Argument(0));
+                for (int i = 0; i < f.Arguments.Length; i++)
+                {
+                    Symbols.AddNew(f.Arguments[i].Item1, target.EntryBlock.Argument(i + 1));
+                }
+            }
+            else
+            {
+                // add arguments
+                for (int i = 0; i < f.Arguments.Length; i++)
+                {
+                    Symbols.AddNew(f.Arguments[i].Item1, target.EntryBlock.Argument(i));
+                }
             }
             // compile the body
             foreach (var stmt in f.Body)
@@ -116,6 +147,14 @@ namespace RoisLang.lower
                             Builder.BuildStore(instance, fieldValue, fieldName);
                         }
                         return instance;
+                    }
+                case MethodCallExpr mCallExpr:
+                    {
+                        var obj = LowerExpr(mCallExpr.Object);
+                        var cls = (ClassType)obj.GetType();
+                        var method = Methods[(cls.Name, mCallExpr.methodName)];
+                        var arguments = new List<MidValue> { obj }.Concat(mCallExpr.Args.Select(x => LowerExpr(x))).ToArray();
+                        return Builder.BuildCall(method, arguments);
                     }
                 default:
                     throw new NotImplementedException();
