@@ -13,16 +13,20 @@ namespace RoisLang.mid_ir
         public readonly TypeRef FuncType;
         public readonly List<MidBlock> Blocks;
         public readonly bool IsExtern;
+        public readonly ClassType? Self;
+
+        public bool IsMethod => Self is not null;
 
         public MidBlock EntryBlock => Blocks[0];
 
-        public MidFunc(string name, List<TypeRef> args, TypeRef ret, bool isExtern = false)
+        public MidFunc(string name, List<TypeRef> args, TypeRef ret, ClassType? self = null, bool isExtern = false)
         {
             Name = name;
             FuncType = types.FuncType.New(args, ret);
             var entryBlock = new MidBlock(0, args.ToList());
             Blocks = new List<MidBlock> { entryBlock };
             IsExtern = isExtern;
+            Self = self;
         }
 
         public MidBlock NewBlock(List<TypeRef>? argumentTypes_ = null)
