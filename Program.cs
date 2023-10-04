@@ -6,6 +6,7 @@ using RoisLang.opt;
 using RoisLang.mid_ir;
 using RoisLang.parser;
 using RoisLang.types;
+using RoisLang.utils;
 
 string testWS =
 @"
@@ -149,23 +150,29 @@ extern def get() -> ptr
 extern def use(x: ptr)
 ";
 
-//var tokens = Lexer.TokenizeString(test3);
-var program = MultiParser.Parse("../../../out/main.ro");
-new TypeChecker().TypeckProgram(program);
-var lowerer = new AstLowerer();
-var midFuncs = lowerer.LowerProgram(program);
-// opt passes
-midFuncs.Functions.ForEach(x => ((IPass)new ConstantFold()).RunOnFunction(x));
-midFuncs.Functions.ForEach(x => new RemoveDeadCode().RunOnFunction(x));
-midFuncs.Functions.ForEach(x => x.Dump());
-Console.WriteLine();
-/*foreach (var stmt in parseResult)
-    lowerer.LowerStmt(stmt);*/
-//new RegAlloc().RegAllocBlock(lowerer.GetBlock());
-var output = File.Open("../../../out/output.c", FileMode.Create);
-new CCompile(new StreamWriter(output, System.Text.Encoding.UTF8)).CompileModule(midFuncs);
-//AsmCompile.CompileModule(new StreamWriter(output, System.Text.Encoding.UTF8)/*Console.Out*/, midFuncs);
-output.Close();
+try
+{
+    //var tokens = Lexer.TokenizeString(test3);
+    var program = MultiParser.Parse("../../../out/main.ro");
+    new TypeChecker().TypeckProgram(program);
+    var lowerer = new AstLowerer();
+    var midFuncs = lowerer.LowerProgram(program);
+    // opt passes
+    midFuncs.Functions.ForEach(x => ((IPass)new ConstantFold()).RunOnFunction(x));
+    midFuncs.Functions.ForEach(x => new RemoveDeadCode().RunOnFunction(x));
+    midFuncs.Functions.ForEach(x => x.Dump());
+    Console.WriteLine();
+    /*foreach (var stmt in parseResult)
+        lowerer.LowerStmt(stmt);*/
+    //new RegAlloc().RegAllocBlock(lowerer.GetBlock());
+    var output = File.Open("../../../out/output.c", FileMode.Create);
+    new CCompile(new StreamWriter(output, System.Text.Encoding.UTF8)).CompileModule(midFuncs);
+    //AsmCompile.CompileModule(new StreamWriter(output, System.Text.Encoding.UTF8)/*Console.Out*/, midFuncs);
+    output.Close();
+} catch (CompilerError cerr)
+{
+    Console.Error.WriteLine(cerr.Text);
+}
 
 
 /*var a = MidValue.Reg(1, 0, TypeRef.VOID, Assertion.X);

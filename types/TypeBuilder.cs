@@ -1,4 +1,5 @@
 ﻿using RoisLang.ast;
+using RoisLang.utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -31,7 +32,7 @@ namespace RoisLang.types
             {
                 GetClassType(cls.Name); // this ensures that the class exists in the list
                 var k = classes[cls.Name];
-                if (k.Item2 == true) throw new Exception("Double definition of class");
+                if (k.Item2 == true) throw new CompilerError($"Class `{cls.Name}` defined twice");
                 k.Item1.Fields = cls.Fields.Select(x => (x.Item2, x.Item1)).ToArray();
                 classes[cls.Name] = (k.Item1, true);
                 cls.Type = k.Item1;
@@ -39,7 +40,7 @@ namespace RoisLang.types
 
             foreach (var k in classes)
                 if (k.Value.Item2 == false)
-                    throw new Exception("Missing class definition");
+                    throw new CompilerError($"Class `{k.Value.Item1}` not defined");
         }
     }
 }
