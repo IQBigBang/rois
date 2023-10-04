@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "RoisLang": {
+      "commandName": "Project",
+      "commandLineArgs": "../../../out/main.ro -o ../../../out/output.c -v"
+    }
+  }
+}
