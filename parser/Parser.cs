@@ -58,6 +58,7 @@ namespace RoisLang.parser
             .Or(Superpower.Parsers.Token.EqualTo(Token.Sym).Select(s => (Expr)new VarExpr(s.ToStringValue())))
             .Or(Superpower.Parsers.Token.EqualTo(Token.KwTrue).Value((Expr)new BoolLit(true)))
             .Or(Superpower.Parsers.Token.EqualTo(Token.KwFalse).Value((Expr)new BoolLit(false)))
+            .Or(Superpower.Parsers.Token.EqualTo(Token.StrLit).Select(s => (Expr)new StrLit(s.ToStringValue()[1..^1])))
             .Or(Constructor)
             // `Lazy` must be used to add a level of indirection (because the `Expr` field is not initialized at the moment)
             .Or(Lazy(GetExpr).Between(Superpower.Parsers.Token.EqualTo(Token.LParen), Superpower.Parsers.Token.EqualTo(Token.RParen)));
@@ -222,14 +223,14 @@ namespace RoisLang.parser
         private static readonly TokenListParser<Token, string> ParseInclude =
              Superpower.Parsers.Token.EqualTo(Token.KwInclude)
             .IgnoreThen(Superpower.Parsers.Token.EqualTo(Token.Sym))
-            .Then(fileName => Superpower.Parsers.Token.EqualTo(Token.Nl).Value(fileName.ToStringValue()));
+            .Then(fileName => Superpower.Parsers.Token.EqualTo(Token.Nl).AtLeastOnce().Value(fileName.ToStringValue()));
 
         private static readonly TokenListParser<Token, (string[], ast.Program)> ParseProgram =
-            Superpower.Parsers.Token.EqualTo(Token.Nl).Optional()
+            Superpower.Parsers.Token.EqualTo(Token.Nl).Many()
             .IgnoreThen(ParseInclude.Many())
             .Then(includes =>
                 ParseClassDef.Select(x => (object)x).Or(ParseFuncDef.Or(ParseExternFuncDef).Select(x => (object)x))
-                .Then(x => Superpower.Parsers.Token.EqualTo(Token.Nl).Optional().Value(x))
+                .Then(x => Superpower.Parsers.Token.EqualTo(Token.Nl).Many().Value(x))
                 .Many()
                 .Select(xs => 
                 {

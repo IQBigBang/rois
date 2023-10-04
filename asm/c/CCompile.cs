@@ -206,6 +206,20 @@ namespace RoisLang.asm.c
                         _out.WriteLine($"{Declare(allocInstr.Out)} = ({PrintTy(allocInstr.Class)})_halloc(sizeof({structType}));");
                     }
                     break;
+                case MidConstStringInstr stringInstr:
+                    {
+                        var bytes = Encoding.UTF8.GetBytes(stringInstr.Text);
+                        var strLen = bytes.Length;
+                        _out.Write(Declare(stringInstr.Out) + " = \"");
+                        _out.Write($"\\x{strLen & 0xFF:X2}");
+                        _out.Write($"\\x{(strLen & 0xFF00) >> 8:X2}");
+                        _out.Write($"\\x{(strLen & 0xFF0000) >> 16:X2}");
+                        _out.Write($"\\x{(strLen & 0xFF000000) >> 24:X2}");
+                        foreach (var b in bytes)
+                            _out.Write($"\\x{(int)b:X2}");
+                        _out.WriteLine("\";");
+                    }
+                    break;
                 default:
                     throw new NotImplementedException();
             }

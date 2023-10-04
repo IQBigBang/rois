@@ -346,4 +346,24 @@ namespace RoisLang.mid_ir
             Console.WriteLine($"{Out} = AllocClass {Class}");
         }
     }
+
+    public class MidConstStringInstr : MidInstr
+    {
+        public string Text;
+        public MidValue Out;
+
+        public override bool HasOut() => true;
+        public override void SetOut(MidValue val) => Out = val;
+        public override MidValue GetOut() => Out;
+        public override TypeRef OutType() => TypeRef.PTR;
+        public override IEnumerable<MidValue> AllArgs() { yield return Out; }
+        public override void Map(Func<MidValue, MidValue> map)
+        {
+            Out = map(Out);
+        }
+        public override void Dump()
+        {
+            Console.WriteLine($"{Out} = ConstString \"{Text}\"");
+        }
+    }
 }
