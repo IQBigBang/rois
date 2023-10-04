@@ -22,7 +22,10 @@ namespace RoisLang.asm.c
         {
             _out.WriteLine("#include \"std/core.h\"");
             _out.WriteLine("#include \"std/alloc.h\"");
-            
+
+            // Type definitions before function types
+            foreach (var cls in module.Classes)
+                _out.WriteLine($"typedef struct struct_{cls.Name}* {NameMangle.NameType(cls)};");
             // Function types
             foreach (var ftype in FuncType.AllFuncTypes)
             {
@@ -37,9 +40,6 @@ namespace RoisLang.asm.c
                 _out.WriteLine("void* env;");
                 _out.WriteLine($"}} {PrintTy(ftype)};");
             }
-            // First the type definitions
-            foreach (var cls in module.Classes)
-                _out.WriteLine($"typedef struct struct_{cls.Name}* {NameMangle.NameType(cls)};");
             foreach (var cls in module.Classes)
             {
                 _out.WriteLine($"struct struct_{cls.Name} {{");
