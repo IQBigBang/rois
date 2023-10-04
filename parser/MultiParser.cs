@@ -1,4 +1,5 @@
 ﻿using RoisLang.types;
+using RoisLang.utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -53,7 +54,7 @@ namespace RoisLang.parser
                 ParseFile(attempt2);
                 return;
             }
-            throw new Exception("Couldn't find included file");
+            throw new CompilerError($"Error: Couldn't find included file `{includeName}`");
         }
 
         void MergeProgram(ast.Program pr)

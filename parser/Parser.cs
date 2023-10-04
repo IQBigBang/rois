@@ -1,5 +1,6 @@
 ﻿using RoisLang.ast;
 using RoisLang.types;
+using RoisLang.utils;
 using Superpower;
 using System;
 using System.Collections.Generic;
@@ -244,7 +245,7 @@ namespace RoisLang.parser
             var tokens = Lexer.TokenizeString(s);
             var result = ParseProgram(new Superpower.Model.TokenList<Token>(tokens.ToArray()));
             if (!result.HasValue)
-                Console.WriteLine(result.FormatErrorMessageFragment());
+                throw new CompilerError(result.ToString(), new SourcePos(result.ErrorPosition.Line, result.ErrorPosition.Column));
             instance = null;
             return result.Value;
         }
