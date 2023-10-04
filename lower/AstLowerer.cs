@@ -17,6 +17,7 @@ namespace RoisLang.lower
         private MidBuilder Builder;
         private ScopedDictionary<string, MidValue> Symbols;
         private Dictionary<ValueTuple<string, string>, MidValue> Methods;
+        private ClassType? StrType;
 
         public AstLowerer()
         {
@@ -37,6 +38,7 @@ namespace RoisLang.lower
                 var value = MidValue.Global(midFunc, Assertion.X);
                 Symbols.AddNew(func.Name, value);
             }
+            StrType = program.Classes.First(c => c.Name == "Str").Type;
             foreach (var cls in program.Classes)
             {
                 foreach (var method in cls.Methods)
@@ -99,6 +101,15 @@ namespace RoisLang.lower
                     return MidValue.ConstInt(intExpr.Value);
                 case ast.BoolLit boolExpr:
                     return MidValue.ConstBool(boolExpr.Value);
+                case StrLit strExpr:
+                    {
+                        // create the raw string
+                        var rawStr = Builder.BuildConstString(strExpr.Text);
+                        // allocate the `Str` type
+                        var instance = Builder.BuildAllocClass(StrType!);
+                        Builder.BuildStore(new FieldInfo(StrType!, 0), instance, rawStr);
+                        return instance;
+                    }
                 case ast.VarExpr varExpr:
                     if (Symbols.Contains(varExpr.Name))
                         return Symbols[varExpr.Name];

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using RoisLang.utils;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -19,6 +20,7 @@ namespace RoisLang.parser
         Int,
         // symbol (name)
         Sym,
+        StrLit,
         // '='
         Assign,
         // (
@@ -180,6 +182,8 @@ namespace RoisLang.parser
                     LexInt();
                 else if (char.IsLetter(ch))
                     LexSymbol();
+                else if (ch == '"')
+                    LexStrLit();
                 else
                 {
                     tokens.Add(SimpleToken(Token.Error, 1));
@@ -245,6 +249,21 @@ namespace RoisLang.parser
                 tokens.Add(new Superpower.Model.Token<Token>(Token.Indent, Span(0)));
                 currentIndent++;
             }
+        }
+
+        private void LexStrLit()
+        {
+            int len = 1;
+            while (true)
+            {
+                if (Pos + len >= Source.Length)
+                    throw new CompilerError("Parsing error: nonterminated string");
+                if (Source[Pos + len] == '"')
+                    break;
+                len++;
+            }
+            // end-of-string
+            tokens.Add(SimpleToken(Token.StrLit, len + 1));
         }
 
         private void LexInt()

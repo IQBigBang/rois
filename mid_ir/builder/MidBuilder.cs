@@ -117,5 +117,11 @@ namespace RoisLang.mid_ir.builder
             var instr = new MidAllocClassInstr { Class = cls, Out = MidValue.Null() };
             return currentBlock!.AddInstr(instr, IncrementPos);
         }
+
+        public MidValue BuildConstString(string text)
+        {
+            var instr = new MidConstStringInstr { Text = text, Out = MidValue.Null() };
+            return currentBlock!.AddInstr(instr, IncrementPos);
+        }
     }
 }

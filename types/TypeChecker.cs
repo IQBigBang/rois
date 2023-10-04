@@ -14,6 +14,7 @@ namespace RoisLang.types
         private ScopedDictionary<string, TypeRef> Symbols;
         // this is for looking up methods
         private Dictionary<ClassType, ClassDef> ClassesTable;
+        private ClassDef? StrClass;
         private TypeRef? Ret;
 
         public TypeChecker()
@@ -26,6 +27,8 @@ namespace RoisLang.types
         public void TypeckProgram(ast.Program program)
         {
             Symbols.Reset();
+            StrClass = program.Classes.FirstOrDefault(c => c.Name == "Str") ?? throw new CompilerError("No Str class defined");
+
             foreach (var func in program.Functions)
             {
                 var ftype = FuncType.New(func.Arguments.Select(x => x.Item2).ToList(), func.Ret);
@@ -150,6 +153,9 @@ namespace RoisLang.types
                     break;
                 case ast.BoolLit:
                     expr.Ty = TypeRef.BOOL;
+                    break;
+                case ast.StrLit:
+                    expr.Ty = StrClass!.Type!;
                     break;
                 case ast.VarExpr varExpr:
                     if (Symbols.Contains(varExpr.Name))
