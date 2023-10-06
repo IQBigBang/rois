@@ -1,4 +1,5 @@
 ﻿using RoisLang.types;
+using RoisLang.utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,37 +8,41 @@ using System.Threading.Tasks;
 
 namespace RoisLang.ast
 {
-    public abstract record Expr()
+    public abstract record Expr
     {
         public TypeRef Ty = TypeRef.UNKNOWN;
+        public SourcePos Pos;
+
+        public Expr(SourcePos pos) { Pos = pos; }
+
         public abstract bool IsValidLhs();
     };
 
-    public record BoolLit(bool Value) : Expr()
+    public record BoolLit(bool Value, SourcePos Pos) : Expr(Pos)
     {
         public override bool IsValidLhs() => false;
     }
 
-    public record IntExpr(int Value) : Expr()
+    public record IntExpr(int Value, SourcePos Pos) : Expr(Pos)
     {
         public override bool IsValidLhs() => false;
     }
 
-    public record StrLit(string Text) : Expr()
+    public record StrLit(string Text, SourcePos Pos) : Expr(Pos)
     {
         public override bool IsValidLhs() => false;
     }
 
-    public record VarExpr(string Name) : Expr()
+    public record VarExpr(string Name, SourcePos Pos) : Expr(Pos)
     {
-        public VarExpr(string name, TypeRef typ) : this(name)
+        public VarExpr(string name, TypeRef typ, SourcePos Pos) : this(name, Pos)
         {
             Ty = typ;
         }
         public override bool IsValidLhs() => true;
     }
 
-    public record BinOpExpr(Expr Lhs, Expr Rhs, BinOpExpr.Ops Op) : Expr()
+    public record BinOpExpr(Expr Lhs, Expr Rhs, BinOpExpr.Ops Op, SourcePos Pos) : Expr(Pos)
     {
         public enum Ops
         {
@@ -54,27 +59,27 @@ namespace RoisLang.ast
         public override bool IsValidLhs() => false;
     }
 
-    public record CallExpr(Expr Callee, Expr[] Args) : Expr()
+    public record CallExpr(Expr Callee, Expr[] Args, SourcePos Pos) : Expr(Pos)
     {
         public override bool IsValidLhs() => false;
     }
 
-    public record MemberExpr(Expr Object, string MemberName) : Expr()
+    public record MemberExpr(Expr Object, string MemberName, SourcePos Pos) : Expr(Pos)
     {
         public override bool IsValidLhs() => true;
     }
 
-    public record MethodCallExpr(Expr Object, string methodName, Expr[] Args) : Expr()
+    public record MethodCallExpr(Expr Object, string methodName, Expr[] Args, SourcePos Pos) : Expr(Pos)
     {
         public override bool IsValidLhs() => false;
     }
 
-    public record ConstructorExpr(ClassType Class, Dictionary<string, Expr> Fields) : Expr()
+    public record ConstructorExpr(ClassType Class, Dictionary<string, Expr> Fields, SourcePos Pos) : Expr(Pos)
     {
         public override bool IsValidLhs() => false;
     }
 
-    public record FailExpr() : Expr()
+    public record FailExpr(SourcePos Pos) : Expr(Pos)
     {   /* TODO */
         public override bool IsValidLhs() => false;
     }

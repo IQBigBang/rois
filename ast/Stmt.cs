@@ -1,4 +1,5 @@
-﻿using System;
+﻿using RoisLang.utils;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -60,10 +61,10 @@ namespace RoisLang.ast
     }
     public record MatchStmt(Expr Scrutinee, (MatchStmt.Patt, Stmt[])[] Cases) : Stmt()
     {
-        public abstract record Patt();
+        public abstract record Patt(SourcePos Pos);
         // '_'
-        public record AnyPatt() : Patt();
-        public record IntLitPatt(int Val) : Patt();
-        public record NamePatt(string Name) : Patt();
+        public record AnyPatt(SourcePos Pos) : Patt(Pos);
+        public record IntLitPatt(int Val, SourcePos Pos) : Patt(Pos);
+        public record NamePatt(string Name, SourcePos Pos) : Patt(Pos);
     }
 }

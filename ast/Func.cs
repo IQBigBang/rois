@@ -1,4 +1,5 @@
 ﻿using RoisLang.types;
+using RoisLang.utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,14 +18,16 @@ namespace RoisLang.ast
         public (string, TypeRef)[] Arguments;
         public TypeRef Ret;
         public Stmt[] Body;
+        public SourcePos Pos;
 
-        public Func(string name, (string, TypeRef)[] arguments, Stmt[] body, TypeRef ret, bool @extern = false)
+        public Func(string name, (string, TypeRef)[] arguments, Stmt[] body, TypeRef ret, SourcePos pos, bool @extern = false)
         {
             Name = name;
             Arguments = arguments;
             Body = body;
             Ret = ret;
             Extern = @extern;
+            Pos = pos;
         }
     }
 
@@ -34,12 +37,14 @@ namespace RoisLang.ast
         public (TypeRef, string)[] Fields;
         public ClassType? Type;
         public Func[] Methods;
+        public SourcePos Pos;
 
-        public ClassDef(string name, (TypeRef, string)[] fields, Func[] methods)
+        public ClassDef(string name, (TypeRef, string)[] fields, Func[] methods, SourcePos pos)
         {
             Name = name;
             Fields = fields;
             Methods = methods;
+            Pos = pos;
         }
     }
 

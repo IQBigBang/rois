@@ -75,7 +75,7 @@ namespace RoisLang.lower
             var compiledCasesList = new List<(Expr, Stmt[])>();
             foreach (var case_ in stmt.Cases)
                 compiledCasesList.Add(LowerCase(case_.Item1, scrName, stmt.Scrutinee.Ty!, case_.Item2));
-            var compiledCases = IfStmt.Build(compiledCasesList, new DiscardStmt(new FailExpr()));
+            var compiledCases = IfStmt.Build(compiledCasesList, new DiscardStmt(new FailExpr(stmt.Scrutinee.Pos)));
             yield return scrNameExpr;
             yield return compiledCases;
         }
@@ -85,16 +85,16 @@ namespace RoisLang.lower
         {
             Expr cond = patt switch
             {
-                AnyPatt or NamePatt => new BoolLit(true), // no checking
+                AnyPatt or NamePatt => new BoolLit(true, patt.Pos), // no checking
                 // scr == int
-                IntLitPatt il => new BinOpExpr(new VarExpr(scrName, scrTy), new IntExpr(il.Val), BinOpExpr.Ops.CmpEq),
+                IntLitPatt il => new BinOpExpr(new VarExpr(scrName, scrTy, il.Pos), new IntExpr(il.Val, il.Pos), BinOpExpr.Ops.CmpEq, il.Pos),
                 _ => throw new NotImplementedException(),
             };
             cond.Ty = types.TypeRef.BOOL;
             // ammend the body if needed
             if (patt is NamePatt namePatt)
                 body = body.Prepend(
-                    new LetAssignStmt(namePatt.Name, new VarExpr(scrName, scrTy))
+                    new LetAssignStmt(namePatt.Name, new VarExpr(scrName, scrTy, patt.Pos))
                     ).ToArray();
             return (cond, body);
         }

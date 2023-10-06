@@ -32,7 +32,7 @@ namespace RoisLang.lower
             List<MidFunc> midFuncs = new();
             foreach (var func in program.Functions)
             {
-                if (Symbols.Contains(func.Name)) throw new CompilerError($"Error: Function `{func.Name}` defined twice");
+                if (Symbols.Contains(func.Name)) throw CompilerError.NameErr($"Function `{func.Name}` defined twice", func.Pos);
                 var midFunc = new MidFunc(func.Name, func.Arguments.Select(x => x.Item2).ToList(), func.Ret, null, func.Extern);
                 midFuncs.Add(midFunc);
                 var value = MidValue.Global(midFunc, Assertion.X);
@@ -113,7 +113,7 @@ namespace RoisLang.lower
                 case ast.VarExpr varExpr:
                     if (Symbols.Contains(varExpr.Name))
                         return Symbols[varExpr.Name];
-                    else throw new CompilerError($"Error: Undefined symbol `{varExpr.Name}` used");
+                    else throw CompilerError.NameErr($"Undefined symbol `{varExpr.Name}` used", varExpr.Pos);
                 case ast.BinOpExpr binOpExpr:
                     {
                         var lhs = LowerExpr(binOpExpr.Lhs);
