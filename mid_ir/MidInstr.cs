@@ -366,4 +366,23 @@ namespace RoisLang.mid_ir
             Console.WriteLine($"{Out} = ConstString \"{Text}\"");
         }
     }
+
+    public class MidFailInstr : MidInstr
+    {
+        public string FailText;
+
+        public override bool HasOut() => false;
+        public override void SetOut(MidValue val) { }
+        public override MidValue GetOut() => MidValue.Null();
+        public override TypeRef OutType() => TypeRef.VOID;
+        public override IEnumerable<MidValue> AllArgs() { yield break; }
+        public override void Map(Func<MidValue, MidValue> map)
+        {
+        }
+        public override void Dump()
+        {
+            Console.WriteLine("Fail");
+        }
+    }
+
 }
