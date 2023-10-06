@@ -1,0 +1,79 @@
+{
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "Rois",
+	"patterns": [
+		{
+			"include": "#comment"
+		},
+		{
+			"include": "#let"
+		},
+		{
+			"include": "#class"
+		},
+		{
+			"include": "#keywords"
+		},
+		{
+			"include": "#literal"
+		},
+
+		{
+			"include": "#strings"
+		}
+	],
+	"repository": {
+		"keywords": {
+			"patterns": [{
+				"name": "keyword.control",
+				"match": "\\b(if|else|return|def|include|let|class|val|extern|new|while|match)\\b"
+			}, {
+				"name": "support.type",
+				"match": "\\b(int|bool|ptr|fun)\\b"
+			}, {
+				"name": "constant.language",
+				"match": "\\b(true|false|self)\\b"
+			}, {
+				"name": "keyword.operator",
+				"match": ",|:|\\+|\\*|->|-|=>|==|!=|<=|>=|<|>|\\.|="
+			}]
+		},
+		"literal": {
+			"patterns": [{
+				"name": "constant.numeric",
+				"match": "\\b[0-9]+\\b"
+			}]
+		},
+		"class": {
+			"match": "\\b(class)\\s+(\\w+)\\b",
+			"captures": {
+				"1": { "name": "keyword.control "},
+				"2": { "name": "support.type" }
+			}
+		},
+		"let": {
+			"match": "\\b(let)\\s+(\\w+)\\b",
+			"captures": {
+				"1": { "name": "keyword.control "},
+				"2": { "name": "variable" }
+			}
+		},
+		"comment": {
+			"begin": "\\/\\*",
+			"end": "\\*\\/",
+			"name": "comment.block"
+		},
+		"strings": {
+			"name": "string.quoted.double.rois",
+			"begin": "\"",
+			"end": "\"",
+			"patterns": [
+				{
+					"name": "constant.character.escape.rois",
+					"match": "\\\\."
+				}
+			]
+		}
+	},
+	"scopeName": "source.rois"
+}

@@ -28,6 +28,7 @@ public static class Program
 
         bool verbose = cmdArgs.Contains("-v");
         bool dryRun = cmdArgs.Contains("-d");
+        bool reportErrorsAsJson = cmdArgs.Contains("-json-errors");
 
         try
         {
@@ -49,8 +50,11 @@ public static class Program
         }
         catch (CompilerError cerr)
         {
-            Console.Error.WriteLine(cerr.ToString());
-            return 1;
+            if (reportErrorsAsJson)
+                Console.Error.WriteLine(cerr.AsJson());
+            else
+                Console.Error.WriteLine(cerr.ToString());
+            return 107; // 107 means graceful failure
         }
     }
 }
