@@ -82,6 +82,8 @@ namespace RoisLang.types
             if (block.Last() is ReturnStmt) return true;
             if (block.Last() is IfStmt ifStmt)
                 return CheckBlockReturns(ifStmt.Then) && CheckBlockReturns(ifStmt.Else);
+            if (block.Last() is MatchStmt matchStmt)
+                return matchStmt.Cases.All(x => CheckBlockReturns(x.Item2));
             return false;
         }
 
@@ -138,7 +140,36 @@ namespace RoisLang.types
                         }
                         return;
                     }
+                case MatchStmt matchStmt:
+                    {
+                        var scrType = TypeckExpr(matchStmt.Scrutinee);
+                        foreach (var (patt, body) in matchStmt.Cases)
+                        {
+                            using (var _ = Symbols.EnterNewScope())
+                            {
+                                TypeckPatt(patt, scrType);
+                                foreach (var stmt_ in body) TypeckStmt(stmt_);
+                            }
+                        }
+                        return;
+                    }
+                default:
+                    throw new NotImplementedException();
+            }
+        }
 
+        private void TypeckPatt(MatchStmt.Patt patt, TypeRef expectedType)
+        {
+            switch (patt)
+            {
+                case MatchStmt.AnyPatt:
+                    return;
+                case MatchStmt.NamePatt namePatt: // equivalent to a `let`
+                    Symbols.AddNew(namePatt.Name, expectedType);
+                    return;
+                case MatchStmt.IntLitPatt intPatt:
+                    if (!expectedType.IsInt) throw new CompilerError("Typechecking error: int pattern");
+                    return;
                 default:
                     throw new NotImplementedException();
             }

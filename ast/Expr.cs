@@ -30,6 +30,10 @@ namespace RoisLang.ast
 
     public record VarExpr(string Name) : Expr()
     {
+        public VarExpr(string name, TypeRef typ) : this(name)
+        {
+            Ty = typ;
+        }
         public override bool IsValidLhs() => true;
     }
 
@@ -67,6 +71,11 @@ namespace RoisLang.ast
 
     public record ConstructorExpr(ClassType Class, Dictionary<string, Expr> Fields) : Expr()
     {
+        public override bool IsValidLhs() => false;
+    }
+
+    public record FailExpr() : Expr()
+    {   /* TODO */
         public override bool IsValidLhs() => false;
     }
 }

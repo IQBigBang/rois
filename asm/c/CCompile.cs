@@ -220,6 +220,9 @@ namespace RoisLang.asm.c
                         _out.WriteLine("\";");
                     }
                     break;
+                case MidFailInstr failInstr:
+                    _out.WriteLine($"__rtfail(\"{failInstr.FailText}\");");
+                    break;
                 default:
                     throw new NotImplementedException();
             }

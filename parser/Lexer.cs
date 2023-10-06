@@ -70,6 +70,7 @@ namespace RoisLang.parser
         KwFun,
         KwInclude,
         KwWhile,
+        KwMatch,
     }
 
     public class Lexer
@@ -180,7 +181,7 @@ namespace RoisLang.parser
                 // symbols and numbers
                 else if (char.IsDigit(ch))
                     LexInt();
-                else if (char.IsLetter(ch))
+                else if (char.IsLetter(ch) || ch == '_')
                     LexSymbol();
                 else if (ch == '"')
                     LexStrLit();
@@ -308,6 +309,8 @@ namespace RoisLang.parser
                 tokens.Add(SimpleToken(Token.KwInclude, 7));
             else if (s == "while")
                 tokens.Add(SimpleToken(Token.KwWhile, 5));
+            else if (s == "match")
+                tokens.Add(SimpleToken(Token.KwMatch, 5));
             else
                 tokens.Add(SimpleToken(Token.Sym, len));
         }

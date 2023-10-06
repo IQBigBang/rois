@@ -45,6 +45,7 @@ namespace RoisLang.utils
 
         public void AddNew(K key, V value)
         {
+            // TODO: check for shadowing and raise a warning if detected
             if (_list.Last().ContainsKey(key)) throw new Exception("Double definiton at same scope");
             _list.Last()[key] = value;
         }

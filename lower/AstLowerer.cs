@@ -167,6 +167,11 @@ namespace RoisLang.lower
                         var arguments = new List<MidValue> { obj }.Concat(mCallExpr.Args.Select(x => LowerExpr(x))).ToArray();
                         return Builder.BuildCall(method, arguments);
                     }
+                case FailExpr failExpr:
+                    {
+                        Builder.BuildFail("Failure");
+                        return MidValue.Null();
+                    }
                 default:
                     throw new NotImplementedException();
             }

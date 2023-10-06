@@ -121,13 +121,13 @@ namespace RoisLang.parser
                 .Select(rightExpr => (Stmt)new AssignStmt(leftExpr, rightExpr))
                 .OptionalOrDefault((Stmt)new DiscardStmt(leftExpr))
             )
-            .Then(expr => Superpower.Parsers.Token.EqualTo(Token.Nl).Value(expr));
+            .Then(expr => Superpower.Parsers.Token.EqualTo(Token.Nl).Many().Value(expr));
 
         private static readonly TokenListParser<Token, Stmt> ReturnStmt =
             Superpower.Parsers.Token.EqualTo(Token.KwReturn)
             .IgnoreThen(GetExpr())
             .Select(expr => (Stmt)new ReturnStmt(expr))
-            .Then(expr => Superpower.Parsers.Token.EqualTo(Token.Nl).Value(expr));
+            .Then(expr => Superpower.Parsers.Token.EqualTo(Token.Nl).Many().Value(expr));
 
         private static readonly TokenListParser<Token, (Expr, Stmt[])> ElseIf =
             Superpower.Parsers.Token.Sequence(Token.KwElse, Token.KwIf).Try()
@@ -154,8 +154,35 @@ namespace RoisLang.parser
                           .IgnoreThen(GetBlock())
                           .Select(block => (Stmt)new WhileStmt(cond, block)));
 
+        private static readonly TokenListParser<Token, MatchStmt.Patt> ParsePatt =
+            Superpower.Parsers.Token.EqualTo(Token.Sym).Select(sym =>
+            {
+                if (sym.ToStringValue() == "_") return new MatchStmt.AnyPatt();
+                else return (MatchStmt.Patt)new MatchStmt.NamePatt(sym.ToStringValue());
+            }).Or(Superpower.Parsers.Token.EqualTo(Token.Int)
+                .Select(n => (MatchStmt.Patt)new MatchStmt.IntLitPatt(int.Parse(n.ToStringValue()))));
+
+        private static readonly TokenListParser<Token, (MatchStmt.Patt, Stmt[])> ParseMatchCase =
+            ParsePatt.Then(patt =>
+                Superpower.Parsers.Token.EqualTo(Token.Arrow)
+                .IgnoreThen(GetStmt())
+                .Then(headStmt =>
+                    GetBlock().OptionalOrDefault(Array.Empty<Stmt>())
+                    .Select(tailStmts => (patt, tailStmts.Prepend(headStmt).ToArray()))));
+
+        private static readonly TokenListParser<Token, Stmt> ParseMatchStmt =
+            Superpower.Parsers.Token.EqualTo(Token.KwMatch)
+            .IgnoreThen(GetExpr())
+            .Then(scr => Superpower.Parsers.Token.Sequence(Token.Colon, Token.Nl)
+                         .IgnoreThen(Superpower.Parsers.Token.EqualTo(Token.Indent))
+                         .IgnoreThen(ParseMatchCase.AtLeastOnce())
+                         .Then(cases => Superpower.Parsers.Token.EqualTo(Token.Dedent)
+                                        .Value((Stmt)new MatchStmt(scr, cases))));
+
         private static readonly TokenListParser<Token, Stmt> ParseStmt =
-            LetStmt.Or(ReturnStmt).Or(ParseIfStmt).Or(ParseWhileStmt).Or(AssignOrDiscardStmt);
+            LetStmt.Or(ReturnStmt).Or(ParseIfStmt).Or(ParseWhileStmt).Or(ParseMatchStmt).Or(AssignOrDiscardStmt);
+
+        private static TokenListParser<Token, Stmt> GetStmt() { return ParseStmt; }
 
         private static readonly TokenListParser<Token, Stmt[]> Block =
             ParseStmt.Many().Between(Superpower.Parsers.Token.EqualTo(Token.Indent), Superpower.Parsers.Token.EqualTo(Token.Dedent));

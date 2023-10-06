@@ -33,6 +33,7 @@ public static class Program
         {
             var program = MultiParser.Parse(inputPath);
             new TypeChecker().TypeckProgram(program);
+            MatchLowerer.VisitProgram(program);
             var lowerer = new AstLowerer();
             var midFuncs = lowerer.LowerProgram(program);
             // opt passes

@@ -123,5 +123,12 @@ namespace RoisLang.mid_ir.builder
             var instr = new MidConstStringInstr { Text = text, Out = MidValue.Null() };
             return currentBlock!.AddInstr(instr, IncrementPos);
         }
+
+        public void BuildFail(string text)
+        {
+            var instr = new MidFailInstr { FailText = text };
+            currentBlock!.AddInstr(instr, IncrementPos);
+        }
+
     }
 }

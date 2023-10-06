@@ -11,8 +11,19 @@ namespace RoisLang.ast
     public record LetAssignStmt(string VarName, Expr Value) : Stmt();
     public record AssignStmt(Expr Lhs, Expr Value) : Stmt();
     public record ReturnStmt(Expr Value) : Stmt();
-    public record IfStmt(Expr Cond, Stmt[] Then, Stmt[] Else) : Stmt()
+    public record IfStmt : Stmt
     {
+        public IfStmt(Expr cond, Stmt[] then, Stmt[] @else) : base()
+        {
+            Cond = cond;
+            Then = then;
+            Else = @else;
+        }
+
+        public Expr Cond { get; init; }
+        public Stmt[] Then { get; set; }
+        public Stmt[] Else { get; set; }
+
         public bool HasElse => Else.Length > 0;
         public static IfStmt Build((Expr, Stmt[]) If, (Expr, Stmt[])[] ElseIfs, Stmt[] Else)
         {
@@ -25,6 +36,34 @@ namespace RoisLang.ast
             }
             return new IfStmt(If.Item1, If.Item2, tree);
         }
+        public static Stmt Build(List<(Expr, Stmt[])> ElseIfs, Stmt Else)
+        {
+            Stmt tree = Else;
+            for (int i = ElseIfs.Count - 1; i >= 0; i--)
+            {
+                var stmt = new IfStmt(ElseIfs[i].Item1, ElseIfs[i].Item2, new Stmt[] { tree });
+                tree = stmt;
+            }
+            return tree;
+        }
     }
-    public record WhileStmt(Expr Cond, Stmt[] Body) : Stmt();
+    public record WhileStmt : Stmt
+    {
+        public Expr Cond { get; init; }
+        public Stmt[] Body { get; set; }
+
+        public WhileStmt(Expr cond, Stmt[] body) : base()
+        {
+            Cond = cond;
+            Body = body;
+        }
+    }
+    public record MatchStmt(Expr Scrutinee, (MatchStmt.Patt, Stmt[])[] Cases) : Stmt()
+    {
+        public abstract record Patt();
+        // '_'
+        public record AnyPatt() : Patt();
+        public record IntLitPatt(int Val) : Patt();
+        public record NamePatt(string Name) : Patt();
+    }
 }
