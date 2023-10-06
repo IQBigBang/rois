@@ -54,7 +54,7 @@ namespace RoisLang.parser
                 ParseFile(attempt2);
                 return;
             }
-            throw new CompilerError($"Error: Couldn't find included file `{includeName}`");
+            throw CompilerError.OtherErr($"Couldn't find included file `{includeName}`", SourcePos.Zero);
         }
 
         void MergeProgram(ast.Program pr)

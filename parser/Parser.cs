@@ -20,6 +20,9 @@ namespace RoisLang.parser
             this.typeBuilder = typeBuilder;
         }
 
+        private static SourcePos Trace(Superpower.Model.Token<Token> token)
+            => new (token.Position.Line, token.Position.Column);
+
         private static readonly TokenListParser<Token, TypeRef> FunTypeName
             = Superpower.Parsers.Token.EqualTo(Token.KwFun)
               .IgnoreThen(Superpower.Parsers.Token.EqualTo(Token.LParen))
@@ -47,18 +50,18 @@ namespace RoisLang.parser
 
         private static readonly TokenListParser<Token, Expr> Constructor =
             Superpower.Parsers.Token.EqualTo(Token.KwNew)
-            .IgnoreThen(Superpower.Parsers.Token.EqualTo(Token.Sym).Select(name => instance!.typeBuilder.GetClassType(name.ToStringValue())))
-            .Then(classType => Superpower.Parsers.Token.EqualTo(Token.LParen)
+            .IgnoreThen(Superpower.Parsers.Token.EqualTo(Token.Sym).Select(name => (instance!.typeBuilder.GetClassType(name.ToStringValue()), Trace(name))))
+            .Then(x => Superpower.Parsers.Token.EqualTo(Token.LParen)
                         .IgnoreThen(ConstructorArg.ManyDelimitedBy(Superpower.Parsers.Token.EqualTo(Token.Comma)))
                         .Then(arguments => Superpower.Parsers.Token.EqualTo(Token.RParen)
-                                    .Value((Expr)new ConstructorExpr(classType, new Dictionary<string, Expr>(arguments)))));
+                                    .Value((Expr)new ConstructorExpr(x.Item1, new Dictionary<string, Expr>(arguments), x.Item2))));
 
         private static readonly TokenListParser<Token, Expr> Atom =
-            Superpower.Parsers.Token.EqualTo(Token.Int).Select(s => (Expr)new IntExpr(int.Parse(s.ToStringValue())))
-            .Or(Superpower.Parsers.Token.EqualTo(Token.Sym).Select(s => (Expr)new VarExpr(s.ToStringValue())))
-            .Or(Superpower.Parsers.Token.EqualTo(Token.KwTrue).Value((Expr)new BoolLit(true)))
-            .Or(Superpower.Parsers.Token.EqualTo(Token.KwFalse).Value((Expr)new BoolLit(false)))
-            .Or(Superpower.Parsers.Token.EqualTo(Token.StrLit).Select(s => (Expr)new StrLit(s.ToStringValue()[1..^1])))
+            Superpower.Parsers.Token.EqualTo(Token.Int).Select(s => (Expr)new IntExpr(int.Parse(s.ToStringValue()), Trace(s)))
+            .Or(Superpower.Parsers.Token.EqualTo(Token.Sym).Select(s => (Expr)new VarExpr(s.ToStringValue(), Trace(s))))
+            .Or(Superpower.Parsers.Token.EqualTo(Token.KwTrue).Select(t => (Expr)new BoolLit(true, Trace(t))))
+            .Or(Superpower.Parsers.Token.EqualTo(Token.KwFalse).Select(t => (Expr)new BoolLit(false, Trace(t))))
+            .Or(Superpower.Parsers.Token.EqualTo(Token.StrLit).Select(s => (Expr)new StrLit(s.ToStringValue()[1..^1], Trace(s))))
             .Or(Constructor)
             // `Lazy` must be used to add a level of indirection (because the `Expr` field is not initialized at the moment)
             .Or(Lazy(GetExpr).Between(Superpower.Parsers.Token.EqualTo(Token.LParen), Superpower.Parsers.Token.EqualTo(Token.RParen)));
@@ -73,34 +76,39 @@ namespace RoisLang.parser
                                 .IgnoreThen(ExprArgs)
                                 .Then(args => Superpower.Parsers.Token.EqualTo(Token.RParen).Value((Expr[]?)args))
                                 .OptionalOrDefault()
-                                .Select(args => Tuple.Create(name.ToStringValue(), args)))
-                , (_, obj, snd) => snd.Item2 == null ? new MemberExpr(obj, snd.Item1)
-                                                     : new MethodCallExpr(obj, snd.Item1, snd.Item2));
+                                .Select(args => Tuple.Create(name, args)))
+                , (_, obj, snd) => snd.Item2 == null ? new MemberExpr(obj, snd.Item1.ToStringValue(), Trace(snd.Item1))
+                                                     : new MethodCallExpr(obj, snd.Item1.ToStringValue(), snd.Item2, Trace(snd.Item1)));
 
         private static readonly TokenListParser<Token, Expr> Call =
             Member.Then(atom => Superpower.Parsers.Token.EqualTo(Token.LParen)
                                 .IgnoreThen(ExprArgs)
                                 .Then(args => Superpower.Parsers.Token.EqualTo(Token.RParen)
-                                              .Value((Expr)new CallExpr(atom, args))
+                                              .Value((Expr)new CallExpr(atom, args, atom.Pos))
                                 ).OptionalOrDefault(atom));
 
         private static readonly TokenListParser<Token, Expr> Factor =
             Call.Chain(Superpower.Parsers.Token.EqualTo(Token.Star), Call,
-                (_, lhs, rhs) => new BinOpExpr(lhs, rhs, BinOpExpr.Ops.Mul));
+                (op, lhs, rhs) => new BinOpExpr(lhs, rhs, BinOpExpr.Ops.Mul, Trace(op)));
 
         private static readonly TokenListParser<Token, Expr> AddSubExpr =
             Factor.Chain(Superpower.Parsers.Token.EqualTo(Token.Plus).Or(Superpower.Parsers.Token.EqualTo(Token.Minus)), Factor,
                 (op, lhs, rhs) => new BinOpExpr(lhs, rhs,
-                    op.ToStringValue() == "+" ? BinOpExpr.Ops.Add : op.ToStringValue() == "-" ? BinOpExpr.Ops.Sub : throw new Exception()));
+                    op.ToStringValue() == "+" ? BinOpExpr.Ops.Add : op.ToStringValue() == "-" ? BinOpExpr.Ops.Sub : throw new Exception(),
+                    Trace(op)));
+
+        private static readonly TokenListParser<Token, (BinOpExpr.Ops, SourcePos)> CmpExprOp =
+            Superpower.Parsers.Token.EqualTo(Token.Equal).Select(x => (BinOpExpr.Ops.CmpEq, Trace(x)))
+            .Or(Superpower.Parsers.Token.EqualTo(Token.NotEqual).Select(x => (BinOpExpr.Ops.CmpNe, Trace(x))))
+            .Or(Superpower.Parsers.Token.EqualTo(Token.Lower).Select(x => (BinOpExpr.Ops.CmpLt, Trace(x))))
+            .Or(Superpower.Parsers.Token.EqualTo(Token.LowerEqual).Select(x => (BinOpExpr.Ops.CmpLe, Trace(x))))
+            .Or(Superpower.Parsers.Token.EqualTo(Token.Greater).Select(x => (BinOpExpr.Ops.CmpGt, Trace(x))))
+            .Or(Superpower.Parsers.Token.EqualTo(Token.GreaterEqual).Select(x => (BinOpExpr.Ops.CmpGe, Trace(x))));
+
 
         private static readonly TokenListParser<Token, Expr> CmpExpr =
             AddSubExpr.Then(lhs =>
-                Superpower.Parsers.Token.EqualTo(Token.Equal).IgnoreThen(Lazy(GetExpr)).Select(rhs => (Expr)new BinOpExpr(lhs, rhs, BinOpExpr.Ops.CmpEq))
-                .Or(Superpower.Parsers.Token.EqualTo(Token.NotEqual).IgnoreThen(Lazy(GetExpr)).Select(rhs => (Expr)new BinOpExpr(lhs, rhs, BinOpExpr.Ops.CmpNe)))
-                .Or(Superpower.Parsers.Token.EqualTo(Token.Lower).IgnoreThen(Lazy(GetExpr)).Select(rhs => (Expr)new BinOpExpr(lhs, rhs, BinOpExpr.Ops.CmpLt)))
-                .Or(Superpower.Parsers.Token.EqualTo(Token.LowerEqual).IgnoreThen(Lazy(GetExpr)).Select(rhs => (Expr)new BinOpExpr(lhs, rhs, BinOpExpr.Ops.CmpLe)))
-                .Or(Superpower.Parsers.Token.EqualTo(Token.Greater).IgnoreThen(Lazy(GetExpr)).Select(rhs => (Expr)new BinOpExpr(lhs, rhs, BinOpExpr.Ops.CmpGt)))
-                .Or(Superpower.Parsers.Token.EqualTo(Token.GreaterEqual).IgnoreThen(Lazy(GetExpr)).Select(rhs => (Expr)new BinOpExpr(lhs, rhs, BinOpExpr.Ops.CmpGe)))
+                CmpExprOp.Then(x => Lazy(GetExpr).Select(rhs => (Expr)new BinOpExpr(lhs, rhs, x.Item1, x.Item2)))
                 .OptionalOrDefault(lhs));
 
         private static TokenListParser<Token, Expr> GetExpr() { return CmpExpr; }
@@ -157,10 +165,10 @@ namespace RoisLang.parser
         private static readonly TokenListParser<Token, MatchStmt.Patt> ParsePatt =
             Superpower.Parsers.Token.EqualTo(Token.Sym).Select(sym =>
             {
-                if (sym.ToStringValue() == "_") return new MatchStmt.AnyPatt();
-                else return (MatchStmt.Patt)new MatchStmt.NamePatt(sym.ToStringValue());
+                if (sym.ToStringValue() == "_") return new MatchStmt.AnyPatt(Trace(sym));
+                else return (MatchStmt.Patt)new MatchStmt.NamePatt(sym.ToStringValue(), Trace(sym));
             }).Or(Superpower.Parsers.Token.EqualTo(Token.Int)
-                .Select(n => (MatchStmt.Patt)new MatchStmt.IntLitPatt(int.Parse(n.ToStringValue()))));
+                .Select(n => (MatchStmt.Patt)new MatchStmt.IntLitPatt(int.Parse(n.ToStringValue()), Trace(n))));
 
         private static readonly TokenListParser<Token, (MatchStmt.Patt, Stmt[])> ParseMatchCase =
             ParsePatt.Then(patt =>
@@ -214,7 +222,7 @@ namespace RoisLang.parser
                          Superpower.Parsers.Token.EqualTo(Token.Colon)
                         .IgnoreThen(Superpower.Parsers.Token.EqualTo(Token.Nl))
                         .IgnoreThen(Block)
-                        .Select(body => new Func(funcName.ToStringValue(), funcArgs, body, retType))
+                        .Select(body => new Func(funcName.ToStringValue(), funcArgs, body, retType, Trace(funcName)))
                         )
                     )
                );
@@ -225,7 +233,7 @@ namespace RoisLang.parser
             .Then((x) => FuncDefArgs.Then(funcArgs => Superpower.Parsers.Token.EqualTo(Token.RParen)
                     .IgnoreThen(RetType)
                     .Then(retType => Superpower.Parsers.Token.EqualTo(Token.Nl)
-                    .Value(new Func(x[2].ToStringValue(), funcArgs, Array.Empty<Stmt>(), retType, true)))));
+                    .Value(new Func(x[2].ToStringValue(), funcArgs, Array.Empty<Stmt>(), retType, Trace(x[2]), true)))));
 
 
         private static readonly TokenListParser<Token, (TypeRef, string)> ParseField =
@@ -245,7 +253,7 @@ namespace RoisLang.parser
                 .Then(fields => ParseFuncDef.Many()
                                 .Then(methods => 
                                     Superpower.Parsers.Token.EqualTo(Token.Dedent)
-                                    .Value(new ClassDef(className.ToStringValue(), fields, methods)))));
+                                    .Value(new ClassDef(className.ToStringValue(), fields, methods, Trace(className))))));
 
         private static readonly TokenListParser<Token, string> ParseInclude =
              Superpower.Parsers.Token.EqualTo(Token.KwInclude)
@@ -273,7 +281,11 @@ namespace RoisLang.parser
             var tokens = Lexer.TokenizeString(s);
             var result = ParseProgram(new Superpower.Model.TokenList<Token>(tokens.ToArray()));
             if (!result.HasValue)
-                throw new CompilerError(result.ToString(), new SourcePos(result.ErrorPosition.Line, result.ErrorPosition.Column));
+            {
+                var pos = new SourcePos(result.ErrorPosition.Line, result.ErrorPosition.Column);
+                var desc = "Expected " + result.Expectations![0] + " but got " + result.Remainder.First().ToString();
+                throw new CompilerError(CompilerError.Type.ParseError, pos, desc);
+            }
             instance = null;
             return result.Value;
         }

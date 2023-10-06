@@ -32,7 +32,7 @@ namespace RoisLang.types
             {
                 GetClassType(cls.Name); // this ensures that the class exists in the list
                 var k = classes[cls.Name];
-                if (k.Item2 == true) throw new CompilerError($"Class `{cls.Name}` defined twice");
+                if (k.Item2 == true) throw CompilerError.NameErr($"Class `{cls.Name}` defined twice", cls.Pos);
                 k.Item1.Fields = cls.Fields.Select(x => (x.Item2, x.Item1)).ToArray();
                 classes[cls.Name] = (k.Item1, true);
                 cls.Type = k.Item1;
@@ -40,7 +40,7 @@ namespace RoisLang.types
 
             foreach (var k in classes)
                 if (k.Value.Item2 == false)
-                    throw new CompilerError($"Class `{k.Value.Item1}` not defined");
+                    throw CompilerError.NameErr($"Class `{k.Value.Item1}` not defined", SourcePos.Zero);
         }
     }
 }

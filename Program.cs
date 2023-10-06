@@ -48,7 +48,7 @@ public static class Program
         }
         catch (CompilerError cerr)
         {
-            Console.Error.WriteLine(cerr.Text);
+            Console.Error.WriteLine(cerr.ToString());
             return 1;
         }
     }

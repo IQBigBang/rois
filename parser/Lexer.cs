@@ -258,7 +258,7 @@ namespace RoisLang.parser
             while (true)
             {
                 if (Pos + len >= Source.Length)
-                    throw new CompilerError("Parsing error: nonterminated string");
+                    throw CompilerError.ParseErr("Nonterminated string", new SourcePos(Span(1).Position.Line, Span(1).Position.Column));
                 if (Source[Pos + len] == '"')
                     break;
                 len++;

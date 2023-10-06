@@ -17,21 +17,53 @@ namespace RoisLang.utils
             Column = column;
         }
 
-        public static readonly SourcePos None = new SourcePos(-1, -1);
+        public static readonly SourcePos Zero = new SourcePos(0, 0);
     }
 
     [Serializable]
     public class CompilerError : Exception
     {
-        public string Text;
+        public enum Type
+        {
+            ParseError,
+            TypeError,
+            NameError,
+            ValidationError,
+            OtherError,
+        };
+
+        public Type Typ;
+        public string Desc;
         public SourcePos Pos;
 
-        public CompilerError(string text, SourcePos? pos = null)
+        public CompilerError(Type type, SourcePos pos, string desc = "")
         {
-            Text = text;
-            Pos = pos ?? SourcePos.None;
+            Typ = type;
+            Desc = desc;
+            Pos = pos;
         }
 
-        public override string ToString() => Text;
+        public static CompilerError ParseErr(string desc, SourcePos pos) => new(Type.ParseError, pos, desc);
+        public static CompilerError TypeErr(string desc, SourcePos pos) => new(Type.TypeError, pos, desc);
+        public static CompilerError NameErr(string desc, SourcePos pos) => new (Type.NameError, pos, desc);
+        public static CompilerError ValidationErr(string desc, SourcePos pos) => new(Type.ValidationError, pos, desc);
+        public static CompilerError OtherErr(string desc, SourcePos pos) => new(Type.OtherError, pos, desc);
+
+        public override string ToString()
+        {
+            string prefix = Typ switch
+            {
+                Type.ParseError => "Parsing error",
+                Type.TypeError => "Typing error",
+                Type.NameError => "Naming error",
+                Type.ValidationError => "Validation error",
+                Type.OtherError => "Error"
+            };
+            prefix = "\x1b[31m" + prefix + "\x1b[0m"; // red color
+            prefix += $" at line {Pos.Line}, column {Pos.Column}";
+            if (Desc != "")
+                return prefix + ": " + Desc;
+            else return prefix;
+        }
     }
 }
