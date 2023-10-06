@@ -8,7 +8,13 @@ namespace RoisLang.utils
 {
     public struct SourcePos
     {
+        /// <summary>
+        /// One-based line number
+        /// </summary>
         public readonly int Line;
+        /// <summary>
+        /// One-based column number
+        /// </summary>
         public readonly int Column;
 
         public SourcePos(int line, int column)
@@ -20,7 +26,6 @@ namespace RoisLang.utils
         public static readonly SourcePos Zero = new SourcePos(0, 0);
     }
 
-    [Serializable]
     public class CompilerError : Exception
     {
         public enum Type
@@ -64,6 +69,22 @@ namespace RoisLang.utils
             if (Desc != "")
                 return prefix + ": " + Desc;
             else return prefix;
+        }
+
+        public string AsJson()
+        {
+            string messageWithoutPos = Typ switch
+            {
+                Type.ParseError => "Parsing error",
+                Type.TypeError => "Typing error",
+                Type.NameError => "Naming error",
+                Type.ValidationError => "Validation error",
+                Type.OtherError => "Error"
+            };
+            messageWithoutPos += ": " + Desc;
+            return "{\"type\": \"error\"," +
+                   $"\"where\": \"{Pos.Line}:{Pos.Column}\"," +
+                   $"\"message\": \"{messageWithoutPos}\"}}";
         }
     }
 }

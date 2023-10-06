@@ -1,0 +1,54 @@
+{
+  "name": "rois-vscode",
+  "displayName": "rois-vscode",
+  "description": "",
+  "publisher": "ibb",
+  "version": "0.1.0",
+  "engines": {
+    "vscode": "^1.83.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "activationEvents": [
+    "onLanguage:rois"
+  ],
+  "main": "./extension.js",
+  "contributes": {
+    "languages": [{
+      "id": "rois",
+      "aliases": ["Rois", "rois"],
+      "extensions": [".ro"],
+      "configuration": "./language-configuration.json"
+    }],
+    "grammars": [{
+      "language": "rois",
+      "scopeName": "source.rois",
+      "path": "./syntaxes/rois.tmLanguage.json"
+    }],
+    "configuration": {
+      "title": "Rois Lsp",
+      "properties": {
+        "rois.lspPath": {
+          "type":"string",
+          "default": "",
+          "description": "The path to a RoisLang compiler executable"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "pretest": "npm run lint"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.83.0",
+    "@types/mocha": "^10.0.1",
+    "@types/node": "16.x",
+    "eslint": "^8.47.0",
+    "glob": "^10.3.3",
+    "mocha": "^10.2.0",
+    "typescript": "^5.1.6",
+    "@vscode/test-electron": "^2.3.4"
+  }
+}

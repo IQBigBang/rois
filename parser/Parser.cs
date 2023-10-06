@@ -283,7 +283,7 @@ namespace RoisLang.parser
             if (!result.HasValue)
             {
                 var pos = new SourcePos(result.ErrorPosition.Line, result.ErrorPosition.Column);
-                var desc = "Expected " + result.Expectations![0] + " but got " + result.Remainder.First().ToString();
+                var desc = "Expected " + result.Expectations![0] + " but got " + result.Remainder.First().Kind.ToString();
                 throw new CompilerError(CompilerError.Type.ParseError, pos, desc);
             }
             instance = null;
