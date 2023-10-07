@@ -1,0 +1,20 @@
+extern def str_len_c(p: ptr) -> int
+extern def str_print_c(p: ptr)
+extern def itoa_c(n: int) -> ptr
+extern def str_join_c(a: ptr, b: ptr) -> ptr
+
+def print(s: Str):
+    str_print_c(s.p)
+
+def itoa(n: int) -> Str:
+    return new Str(p: itoa_c(n))
+
+/* Length-Prefixed string */
+class Str:
+    val p: ptr
+
+    def len() -> int:
+        return str_len_c(self.p)
+
+    def join(s: Str) -> Str:
+        return new Str(p: str_join_c(self.p, s.p))
