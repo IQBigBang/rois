@@ -3,6 +3,11 @@
 #include "stdlib.h"
 #include "string.h"
 
+typedef struct {
+    I32 len;
+    char chars[];
+}* str;
+
 // extern def str_len_c(p: ptr) -> int
 I32 str_len_c(PTR p) {
     return ((str)p)->len;
