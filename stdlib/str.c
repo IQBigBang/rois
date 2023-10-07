@@ -1,5 +1,7 @@
 ﻿#include "core.h"
-#include <string.h>
+#include "stdio.h"
+#include "stdlib.h"
+#include "string.h"
 
 // extern def str_len_c(p: ptr) -> int
 I32 str_len_c(PTR p) {
