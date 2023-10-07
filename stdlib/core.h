@@ -16,4 +16,6 @@ extern void* CLOENV;
 
 void __attribute__ ((noinline)) __rtfail(const char* desc);
 
+int main();
+
 #endif /* CORE_H */

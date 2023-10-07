@@ -9,7 +9,7 @@ if sys.platform == 'win32':
     EXE = '.exe'
 
 REPO = 'https://github.com/IQBigBang/rois.git'
-BRANCH = 'c-backend'
+BRANCH = 'main'
 BOILERPLATE_MAKEFILE = """
 .PHONY: run build all
 all: build
