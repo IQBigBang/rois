@@ -25,6 +25,10 @@ public static class Program
         }
         var outputPath = cmdArgs[2];
 
+        /*var includeDirs = 
+        foreach (var arg in cmdArgs)
+            if (arg.StartsWith("-I"))*/
+
         bool verbose = cmdArgs.Contains("-v");
         bool dryRun = cmdArgs.Contains("-d");
         bool reportErrorsAsJson = cmdArgs.Contains("-json-errors");
