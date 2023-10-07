@@ -365,3 +365,5 @@ RoisLang.sln
 *.vsix
 lsp-extension/.eslintrc.json
 lsp-extension/.vscode/launch.json
+
+*/.idea/*
