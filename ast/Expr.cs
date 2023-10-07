@@ -55,6 +55,7 @@ namespace RoisLang.ast
             CmpGt,
             CmpLe,
             CmpGe,
+            And,
         }
         public override bool IsValidLhs() => false;
     }

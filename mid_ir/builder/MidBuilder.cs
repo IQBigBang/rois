@@ -130,5 +130,12 @@ namespace RoisLang.mid_ir.builder
             currentBlock!.AddInstr(instr, IncrementPos);
         }
 
+        public MidValue BuildAnd(MidValue lhs, MidValue rhs)
+        {
+            lhs.AssertType(TypeRef.BOOL);
+            rhs.AssertType(TypeRef.BOOL);
+            var instr = new mid_ir.MidAndInstr { Out = MidValue.Null(), Lhs = lhs, Rhs = rhs };
+            return currentBlock!.AddInstr(instr, IncrementPos);
+        }
     }
 }

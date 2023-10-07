@@ -385,4 +385,26 @@ namespace RoisLang.mid_ir
         }
     }
 
+    public class MidAndInstr : MidInstr
+    {
+        public MidValue Out;
+        public MidValue Lhs;
+        public MidValue Rhs;
+
+        public override bool HasOut() => true;
+        public override void SetOut(MidValue val) => Out = val;
+        public override MidValue GetOut() => Out;
+        public override TypeRef OutType() => TypeRef.BOOL;
+        public override IEnumerable<MidValue> AllArgs() { yield return Out; yield return Lhs; yield return Rhs; }
+        public override void Map(Func<MidValue, MidValue> map)
+        {
+            Out = map(Out);
+            Lhs = map(Lhs);
+            Rhs = map(Rhs);
+        }
+        public override void Dump()
+        {
+            Console.WriteLine($"{Out} = And {Lhs}, {Rhs}");
+        }
+    }
 }
