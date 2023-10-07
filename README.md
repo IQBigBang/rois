@@ -26,3 +26,23 @@ Current and future features:
  - [ ] Polymorphism
  - [ ] SELF-HOSTING COMPILER
 
+### LSP
+
+A syntax highlighter with trivial integration of compiler errors
+is implemented in the `lsp-extension` folder.
+
+### Example program
+
+```
+include Str
+
+def fib(n: int) -> int:
+	match n:
+		0 -> return 1
+		1 -> return 1
+		_ -> return fib(n-1) + fib(n - 2)
+
+def main():
+	let x = fib(25)
+	print("The result is ".join(itoa(x)))
+```

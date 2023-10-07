@@ -4,6 +4,10 @@ import os
 import shutil
 import sys
 
+EXE = ''
+if sys.platform == 'win32':
+    EXE = '.exe'
+
 REPO = 'https://github.com/IQBigBang/rois.git'
 BRANCH = 'c-backend'
 BOILERPLATE_MAKEFILE = """
@@ -14,13 +18,12 @@ run: build
 build: $(OUTNAME)
 
 $(OUTNAME): .ris/obj/output.o
-\tCC .ris/obj/output.o .ris/std/libstdrois.a -o $(OUTNAME)
+\t$(CC) .ris/obj/output.o .ris/std/libstdrois.a -o $(OUTNAME)
 
 .ris/obj/output.o: $(MAIN)
-\t.ris/bin/RoisLang.exe $(MAIN) -o .ris/obj/output.c
-\t$(CC) .ris/obj/output.c -g -O1 -c -o .ris/obj/output.o
+\t.ris/bin/RoisLang""" + EXE + """ $(MAIN) -o .ris/obj/output.c
+\t$(CC) .ris/obj/output.c -g -O1 -c -o .ris/obj/output.o -I.ris/
 """
-
 
 def color_red(text):
     return "\x1b[31m" + text + "\x1b[0m"
@@ -54,12 +57,15 @@ def stdlib_build(ris_dir, cc):
     # Create the `std` folder in risDir
     os.makedirs(os.path.join(ris_dir, 'std'), exist_ok=True)
     # Link the standard library files into an archive
-    if subprocess.run(['ar', 'rc', '../../std/libstdrois.a', '*.o'], cwd=stdlibPath).returncode != 0:
+    objfiles = [str(i) + '.o' for i in range(1, n)]
+    if subprocess.run(['ar', 'rc', '../../std/libstdrois.a'] + objfiles, cwd=stdlibPath).returncode != 0:
         print(color_red("error") + ": failed to build standard library")
         sys.exit(1)
-    # Move the *.ro files into the main folder
+    # Move the headers into .ris/std and *.ro files into the main folder
     for f in os.listdir(stdlibPath):
-        if f.endswith('.ro'):
+        if f.endswith('.h'):
+            os.rename(os.path.join(stdlibPath, f), os.path.join(ris_dir, 'std', os.path.basename(f)))
+        elif f.endswith('.ro'):
             os.rename(os.path.join(stdlibPath, f), os.path.join(ris_dir, '..', os.path.basename(f)))
 
 
@@ -127,6 +133,8 @@ def do_init(path, no_download, keep_compiler):
         f.write(f'MAIN={main_file_name}\n')
         f.write(f'OUTNAME={program_name}\n')
         f.write(BOILERPLATE_MAKEFILE)
+    # Create the .ris/obj directory
+        os.makedirs(os.path.join(path, '.ris', 'obj'), exist_ok=True)
     print(color_green("Initialization finished"))
 
 parser = argparse.ArgumentParser(description='Rois Installation System')
