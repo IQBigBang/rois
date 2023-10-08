@@ -367,3 +367,10 @@ lsp-extension/.eslintrc.json
 lsp-extension/.vscode/launch.json
 
 */.idea/*
+main.ro
+*.o
+*.ar
+Makefile
+output
+output.c
+std

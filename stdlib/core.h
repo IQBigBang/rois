@@ -6,6 +6,7 @@
 #define I32 int32_t
 #define bool int32_t
 #define PTR void*
+#define CHAR int32_t
 
 #define true ((bool)1)
 #define false ((bool)0)

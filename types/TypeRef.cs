@@ -19,6 +19,7 @@ namespace RoisLang.types
         public static readonly TypeRef VOID = new VoidType();
         public static readonly TypeRef BOOL = new BoolType();
         public static readonly TypeRef PTR = new PtrType();
+        public static readonly TypeRef CHAR = new CharType();
 
         public override bool Equals(object? obj)
         {
@@ -33,6 +34,7 @@ namespace RoisLang.types
             if (IsInt && other.IsInt) return true;
             if (IsBool && other.IsBool) return true;
             if (this is PtrType && other is PtrType) return true;
+            if (this is CharType && other is CharType) return true;
             if (IsFunc && other.IsFunc)
             {
                 var this_ = (FuncType)this;

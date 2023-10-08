@@ -83,6 +83,7 @@ namespace RoisLang.asm.c
             => tr switch
             {
                 IntType => "I32",
+                CharType => "CHAR",
                 BoolType => "bool",
                 VoidType => "void", // TODO
                 PtrType => "PTR",
@@ -102,6 +103,7 @@ namespace RoisLang.asm.c
             if (tr.IsInt) return "I";
             if (tr.IsBool) return "B";
             if (tr is PtrType) return "P";
+            if (tr is CharType) return "H";
             if (tr.IsFunc) {
                 var ftype = (FuncType)tr;
                 string s = "F" + ftype.Args.Count;

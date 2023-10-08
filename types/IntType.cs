@@ -10,4 +10,9 @@ namespace RoisLang.types
     {
         public override string ToString() => "int";
     }
+
+    public class CharType : TypeRef
+    {
+        public override string ToString() => "char";
+    }
 }

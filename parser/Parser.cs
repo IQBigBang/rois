@@ -39,6 +39,7 @@ namespace RoisLang.parser
             = Superpower.Parsers.Token.EqualToValue(Token.Sym, "int").Value(TypeRef.INT)
               .Or(Superpower.Parsers.Token.EqualToValue(Token.Sym, "bool").Value(TypeRef.BOOL))
               .Or(Superpower.Parsers.Token.EqualToValue(Token.Sym, "ptr").Value(TypeRef.PTR))
+              .Or(Superpower.Parsers.Token.EqualToValue(Token.Sym, "char").Value(TypeRef.CHAR))
               .Or(FunTypeName)
               .Or(Superpower.Parsers.Token.EqualTo(Token.Sym).Select(name => (TypeRef)instance!.typeBuilder.GetClassType(name.ToStringValue())));
 
