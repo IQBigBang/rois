@@ -233,6 +233,11 @@ namespace RoisLang.types
                             if (!lhs.IsInt || !rhs.IsInt)
                                 throw CompilerError.TypeErr("Both operands must be int", binOpExpr.Pos);
                             expr.Ty = TypeRef.BOOL;
+                        } else if (binOpExpr.Op is BinOpExpr.Ops.And or BinOpExpr.Ops.Or)
+                        {
+                            if (!lhs.IsBool || !rhs.IsBool)
+                                throw CompilerError.TypeErr("Both operands must be boolean", binOpExpr.Pos);
+                            expr.Ty = TypeRef.BOOL;
                         }
                         break;
                     }

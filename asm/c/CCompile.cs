@@ -160,7 +160,7 @@ namespace RoisLang.asm.c
                         MidICmpInstr.CmpOp.Gt => ">", 
                         MidICmpInstr.CmpOp.Ge => ">=", 
                     });
-                    _out.WriteLine($"((I32){Print(icmpInstr.Rhs)});");
+                    _out.WriteLine($" ((I32){Print(icmpInstr.Rhs)});");
                     break;
                 case MidINegInstr iNegInstr:
                     _out.WriteLine($"{Declare(iNegInstr.Out)} = -((I32){Print(iNegInstr.Val)});");
@@ -228,6 +228,12 @@ namespace RoisLang.asm.c
                     break;
                 case MidBitcastInstr bitcastInstr:
                     _out.WriteLine(Declare(bitcastInstr.Out) + $" = (({PrintTy(bitcastInstr.TargetType)}) {Print(bitcastInstr.Val)});");
+                    break;
+                case MidAndInstr andInstr:
+                    _out.WriteLine($"{Declare(andInstr.Out)} = ((bool){Print(andInstr.Lhs)}) && ((bool){Print(andInstr.Rhs)});");
+                    break;
+                case MidOrInstr orInstr:
+                    _out.WriteLine($"{Declare(orInstr.Out)} = ((bool){Print(orInstr.Lhs)}) || ((bool){Print(orInstr.Rhs)});");
                     break;
                 case MidNotInstr notInstr:
                     _out.WriteLine($"{Declare(notInstr.Out)} = !((bool){Print(notInstr.Val)});");

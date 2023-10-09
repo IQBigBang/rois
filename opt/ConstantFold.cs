@@ -60,20 +60,33 @@ namespace RoisLang.opt
                         }
                         break;
                     case MidAndInstr andInstr:
-                        if (andInstr.Lhs.IsConstBool || andInstr.Rhs.IsConstBool)
-                        {
-                            // if both are true => true
-                            if (andInstr.Lhs.IsConstBool && andInstr.Rhs.IsConstBool && andInstr.Lhs.GetBoolValue() && andInstr.Rhs.GetBoolValue())
-                                ReplaceInstrWithConstant(andInstr.Out, MidValue.ConstBool(true));
-                            // if one is false => false
-                            else if ((andInstr.Lhs.IsConstBool && !andInstr.Lhs.GetBoolValue()) || (andInstr.Rhs.IsConstBool && !andInstr.Rhs.GetBoolValue()))
-                                ReplaceInstrWithConstant(andInstr.Out, MidValue.ConstBool(false));
-                            // if one is true => replace with the other one
-                            else if (andInstr.Lhs.IsConstBool && andInstr.Lhs.GetBoolValue())
-                                ReplaceInstrWithConstant(andInstr.Out, andInstr.Rhs);
-                            else if (andInstr.Rhs.IsConstBool && andInstr.Rhs.GetBoolValue())
-                                ReplaceInstrWithConstant(andInstr.Out, andInstr.Lhs);
-                        }
+                        if (!andInstr.Lhs.IsConstBool && !andInstr.Rhs.IsConstBool) break;
+                        // if both are true => true
+                        if (andInstr.Lhs.IsConstBool && andInstr.Rhs.IsConstBool && andInstr.Lhs.GetBoolValue() && andInstr.Rhs.GetBoolValue())
+                            ReplaceInstrWithConstant(andInstr.Out, MidValue.ConstBool(true));
+                        // if one is false => false
+                        else if ((andInstr.Lhs.IsConstBool && !andInstr.Lhs.GetBoolValue()) || (andInstr.Rhs.IsConstBool && !andInstr.Rhs.GetBoolValue()))
+                            ReplaceInstrWithConstant(andInstr.Out, MidValue.ConstBool(false));
+                        // if one is true => replace with the other one
+                        else if (andInstr.Lhs.IsConstBool && andInstr.Lhs.GetBoolValue())
+                            ReplaceInstrWithConstant(andInstr.Out, andInstr.Rhs);
+                        else if (andInstr.Rhs.IsConstBool && andInstr.Rhs.GetBoolValue())
+                            ReplaceInstrWithConstant(andInstr.Out, andInstr.Lhs);
+                        break;
+                    case MidOrInstr orInstr:
+                        if (!orInstr.Lhs.IsConstBool && !orInstr.Rhs.IsConstBool) break;
+                        // if both are false => false
+                        if (orInstr.Lhs.IsConstBool && orInstr.Rhs.IsConstBool && !orInstr.Lhs.GetBoolValue() && !orInstr.Rhs.GetBoolValue())
+                            ReplaceInstrWithConstant(orInstr.Out, MidValue.ConstBool(false));
+                        // if one is true => true
+                        else if ((orInstr.Lhs.IsConstBool && orInstr.Lhs.GetBoolValue()) || (orInstr.Rhs.IsConstBool && orInstr.Rhs.GetBoolValue()))
+                            ReplaceInstrWithConstant(orInstr.Out, MidValue.ConstBool(true));
+                        // if one is false => replace with the other one
+                        else if (orInstr.Lhs.IsConstBool && !orInstr.Lhs.GetBoolValue())
+                            ReplaceInstrWithConstant(orInstr.Out, orInstr.Rhs);
+                        else if (orInstr.Rhs.IsConstBool && !orInstr.Rhs.GetBoolValue())
+                            ReplaceInstrWithConstant(orInstr.Out, orInstr.Lhs);
+                        break;
                     case MidNotInstr notInstr:
                         if (notInstr.Val.IsConstBool)
                             ReplaceInstrWithConstant(notInstr.Out, MidValue.ConstBool(!notInstr.Val.GetBoolValue()));

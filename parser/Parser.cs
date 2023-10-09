@@ -120,10 +120,18 @@ namespace RoisLang.parser
 
         private static readonly TokenListParser<Token, Expr> CmpExpr =
             AddSubExpr.Then(lhs =>
-                CmpExprOp.Then(x => Lazy(GetExpr).Select(rhs => (Expr)new BinOpExpr(lhs, rhs, x.Item1, x.Item2)))
+                CmpExprOp.Then(x => AddSubExpr.Select(rhs => (Expr)new BinOpExpr(lhs, rhs, x.Item1, x.Item2)))
                 .OptionalOrDefault(lhs));
 
-        private static TokenListParser<Token, Expr> GetExpr() { return CmpExpr; }
+        private static readonly TokenListParser<Token, Expr> AndOrExpr =
+            CmpExpr.Then(
+                e => Superpower.Parsers.Token.EqualTo(Token.KwAnd).AndThen(CmpExpr).AtLeastOnce()
+                        .Select(tails => tails.Aggregate(e, (a, b) => (Expr)new BinOpExpr(a, b.Item2, BinOpExpr.Ops.And, Trace(b.Item1))))
+                    .Or(Superpower.Parsers.Token.EqualTo(Token.KwOr).AndThen(CmpExpr).AtLeastOnce()
+                        .Select(tails => tails.Aggregate(e, (a, b) => (Expr)new BinOpExpr(a, b.Item2, BinOpExpr.Ops.Or, Trace(b.Item1)))))
+                    .OptionalOrDefault(e));
+
+        private static TokenListParser<Token, Expr> GetExpr() { return AndOrExpr; }
 
         private static readonly TokenListParser<Token, Stmt> LetStmt =
             Superpower.Parsers.Token.EqualTo(Token.KwLet)
@@ -307,5 +315,11 @@ namespace RoisLang.parser
             return (tokens) => parser()(tokens);
         }
         
+    }
+
+    internal static class Ext
+    {
+        public static TokenListParser<TKind, (T, U)> AndThen<TKind, T, U>(this TokenListParser<TKind, T> first, TokenListParser<TKind, U> second)
+            => first.Then(x => second.Select(y => (x, y)));
     }
 }

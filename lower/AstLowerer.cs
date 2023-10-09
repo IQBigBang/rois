@@ -147,6 +147,10 @@ namespace RoisLang.lower
                             return Builder.BuildICmp(lhs, rhs, MidICmpInstr.CmpOp.Gt);
                         else if (binOpExpr.Op is BinOpExpr.Ops.CmpGe)
                             return Builder.BuildICmp(lhs, rhs, MidICmpInstr.CmpOp.Ge);
+                        else if (binOpExpr.Op is BinOpExpr.Ops.And)
+                            return Builder.BuildAnd(lhs, rhs);
+                        else if (binOpExpr.Op is BinOpExpr.Ops.Or)
+                            return Builder.BuildOr(lhs, rhs);
                         else throw new NotImplementedException();
                     }
                 case ast.CallExpr callExpr:
