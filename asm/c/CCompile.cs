@@ -162,6 +162,9 @@ namespace RoisLang.asm.c
                     });
                     _out.WriteLine($"((I32){Print(icmpInstr.Rhs)});");
                     break;
+                case MidINegInstr iNegInstr:
+                    _out.WriteLine($"{Declare(iNegInstr.Out)} = -((I32){Print(iNegInstr.Val)});");
+                    break;
                 case MidGotoInstr gotoInstr:
                     // move the values
                     {
@@ -225,6 +228,9 @@ namespace RoisLang.asm.c
                     break;
                 case MidBitcastInstr bitcastInstr:
                     _out.WriteLine(Declare(bitcastInstr.Out) + $" = (({PrintTy(bitcastInstr.TargetType)}) {Print(bitcastInstr.Val)});");
+                    break;
+                case MidNotInstr notInstr:
+                    _out.WriteLine($"{Declare(notInstr.Out)} = !((bool){Print(notInstr.Val)});");
                     break;
                 default:
                     throw new NotImplementedException();

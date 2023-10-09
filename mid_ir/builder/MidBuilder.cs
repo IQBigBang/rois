@@ -57,6 +57,13 @@ namespace RoisLang.mid_ir.builder
             return currentBlock!.AddInstr(instr, IncrementPos);
         }
 
+        public MidValue BuildINeg(MidValue val)
+        {
+            val.AssertType(TypeRef.INT);
+            var instr = new mid_ir.MidINegInstr { Out = MidValue.Null(), Val = val };
+            return currentBlock!.AddInstr(instr, IncrementPos);
+        }
+
         public void BuildRet() => BuildRet(MidValue.Null());
         public void BuildRet(MidValue val)
         {
@@ -135,6 +142,13 @@ namespace RoisLang.mid_ir.builder
             lhs.AssertType(TypeRef.BOOL);
             rhs.AssertType(TypeRef.BOOL);
             var instr = new mid_ir.MidAndInstr { Out = MidValue.Null(), Lhs = lhs, Rhs = rhs };
+            return currentBlock!.AddInstr(instr, IncrementPos);
+        }
+
+        public MidValue BuildNot(MidValue val)
+        {
+            val.AssertType(TypeRef.BOOL);
+            var instr = new mid_ir.MidNotInstr { Out = MidValue.Null(), Val = val };
             return currentBlock!.AddInstr(instr, IncrementPos);
         }
 

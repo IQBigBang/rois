@@ -47,6 +47,16 @@ namespace RoisLang.ast
         public override bool IsValidLhs() => true;
     }
 
+    public record UnOpExpr(Expr Exp, UnOpExpr.Ops Op, SourcePos Pos) : Expr(Pos)
+    {
+        public enum Ops
+        {
+            Not, // !
+            Neg,  // -
+        }
+        public override bool IsValidLhs() => false;
+    }
+
     public record BinOpExpr(Expr Lhs, Expr Rhs, BinOpExpr.Ops Op, SourcePos Pos) : Expr(Pos)
     {
         public enum Ops

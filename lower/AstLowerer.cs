@@ -116,6 +116,15 @@ namespace RoisLang.lower
                     if (Symbols.Contains(varExpr.Name))
                         return Symbols[varExpr.Name];
                     else throw CompilerError.NameErr($"Undefined symbol `{varExpr.Name}` used", varExpr.Pos);
+                case UnOpExpr unOpExpr:
+                    {
+                        var subExpr = LowerExpr(unOpExpr.Exp);
+                        if (unOpExpr.Op == UnOpExpr.Ops.Not)
+                            return Builder.BuildNot(subExpr);
+                        if (unOpExpr.Op == UnOpExpr.Ops.Neg)
+                            return Builder.BuildINeg(subExpr);
+                        throw new NotImplementedException();
+                    }
                 case ast.BinOpExpr binOpExpr:
                     {
                         var lhs = LowerExpr(binOpExpr.Lhs);

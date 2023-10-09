@@ -201,6 +201,22 @@ namespace RoisLang.types
                         expr.Ty = Symbols[varExpr.Name];
                     else throw CompilerError.NameErr($"Undefined variable `{varExpr.Name}`", varExpr.Pos);
                     break;
+                case UnOpExpr unOpExpr:
+                    {
+                        var subExpr = TypeckExpr(unOpExpr.Exp);
+                        if (unOpExpr.Op == UnOpExpr.Ops.Not)
+                        {
+                            if (!subExpr.IsBool) throw CompilerError.TypeErr("Operand must be bool", unOpExpr.Pos);
+                            unOpExpr.Ty = TypeRef.BOOL;
+                        }
+                        else if (unOpExpr.Op == UnOpExpr.Ops.Neg)
+                        {
+                            if (!subExpr.IsInt) throw CompilerError.TypeErr("Operand must be int", unOpExpr.Pos);
+                            unOpExpr.Ty = TypeRef.INT;
+                        }
+                        else throw new NotImplementedException();
+                        break;
+                    }
                 case ast.BinOpExpr binOpExpr:
                     {
                         var lhs = TypeckExpr(binOpExpr.Lhs);

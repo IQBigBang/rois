@@ -38,6 +38,12 @@ namespace RoisLang.opt
                             ReplaceInstrWithConstant(iMulInstr.Out, MidValue.ConstInt(result));
                         }
                         break;
+                    case MidINegInstr iNegInstr:
+                        {
+                            if (iNegInstr.Val.IsConst)
+                                ReplaceInstrWithConstant(iNegInstr.Out, MidValue.ConstInt(-iNegInstr.Val.GetIntValue()));
+                        }
+                        break;
                     case MidICmpInstr icmpInstr:
                         if (icmpInstr.Lhs.IsConstInt && icmpInstr.Rhs.IsConstInt)
                         {
@@ -68,6 +74,9 @@ namespace RoisLang.opt
                             else if (andInstr.Rhs.IsConstBool && andInstr.Rhs.GetBoolValue())
                                 ReplaceInstrWithConstant(andInstr.Out, andInstr.Lhs);
                         }
+                    case MidNotInstr notInstr:
+                        if (notInstr.Val.IsConstBool)
+                            ReplaceInstrWithConstant(notInstr.Out, MidValue.ConstBool(!notInstr.Val.GetBoolValue()));
                         break;
                     case MidBranchInstr branchInstr:
                         if (branchInstr.Cond.IsConst)

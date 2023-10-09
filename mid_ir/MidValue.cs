@@ -36,11 +36,14 @@ namespace RoisLang.mid_ir
             this.value = value;
             this.ty = ty;
         }
+        
+        private static readonly MidValue TRUE = new(1, new BoolValue(true), TypeRef.BOOL);
+        private static readonly MidValue FALSE = new(1, new BoolValue(false), TypeRef.BOOL);
 
         //public static MidValue Null = new MidValue(0, 0, TypeRef.UNKNOWN);
         public static MidValue Null() => new(0, 0, TypeRef.UNKNOWN);
         public static MidValue ConstInt(int val) => new(1, new IntValue(val), TypeRef.INT);
-        public static MidValue ConstBool(bool val) => new(1, new BoolValue(val), TypeRef.BOOL);
+        public static MidValue ConstBool(bool val) => val ? TRUE : FALSE;
         public static MidValue ConstChar(uint ch) => new(1, new CharValue(ch), TypeRef.CHAR);
         /// <summary>
         /// Every register value SHOULD be a singleton!

@@ -211,6 +211,27 @@ namespace RoisLang.mid_ir
         }
     }
 
+    public class MidINegInstr : MidInstr
+    {
+        public MidValue Out;
+        public MidValue Val;
+
+        public override bool HasOut() => true;
+        public override void SetOut(MidValue val) => Out = val;
+        public override MidValue GetOut() => Out;
+        public override TypeRef OutType() => TypeRef.INT;
+        public override IEnumerable<MidValue> AllArgs() { yield return Out; yield return Val; }
+        public override void Map(Func<MidValue, MidValue> map)
+        {
+            Out = map(Out);
+            Val = map(Val);
+        }
+        public override void Dump()
+        {
+            Console.WriteLine($"{Out} = INeg {Val}");
+        }
+    }
+
     public class MidGotoInstr : MidInstr
     {
         public int TargetBlockId = -1;
@@ -405,6 +426,27 @@ namespace RoisLang.mid_ir
         public override void Dump()
         {
             Console.WriteLine($"{Out} = And {Lhs}, {Rhs}");
+        }
+    }
+
+    public class MidNotInstr : MidInstr
+    {
+        public MidValue Out;
+        public MidValue Val;
+
+        public override bool HasOut() => true;
+        public override void SetOut(MidValue val) => Out = val;
+        public override MidValue GetOut() => Out;
+        public override TypeRef OutType() => TypeRef.BOOL;
+        public override IEnumerable<MidValue> AllArgs() { yield return Out; yield return Val; }
+        public override void Map(Func<MidValue, MidValue> map)
+        {
+            Out = map(Out);
+            Val = map(Val);
+        }
+        public override void Dump()
+        {
+            Console.WriteLine($"{Out} = Not {Val}");
         }
     }
 

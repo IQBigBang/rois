@@ -54,6 +54,8 @@ namespace RoisLang.parser
         GreaterEqual,
         // .
         Dot,
+        // !
+        ExclMark,
         // the 'let' keyword
         KwLet,
         // the 'def' keyword
@@ -141,8 +143,13 @@ namespace RoisLang.parser
                     else
                         tokens.Add(SimpleToken(Token.Assign, 1));
                 }
-                else if (ch == '!' && Pos + 1 < Source.Length && Source[Pos + 1] == '=')
-                    tokens.Add(SimpleToken(Token.NotEqual, 2));
+                else if (ch == '!')
+                {
+                    if (Pos + 1 < Source.Length && Source[Pos + 1] == '=')
+                        tokens.Add(SimpleToken(Token.NotEqual, 2));
+                    else
+                        tokens.Add(SimpleToken(Token.ExclMark, 1));
+                }
                 else if (ch == '(')
                     tokens.Add(SimpleToken(Token.LParen, 1));
                 else if (ch == ')')
