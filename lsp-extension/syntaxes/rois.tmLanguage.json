@@ -12,12 +12,14 @@
 			"include": "#class"
 		},
 		{
+			"include": "#class_val"
+		},
+		{
 			"include": "#keywords"
 		},
 		{
 			"include": "#literal"
 		},
-
 		{
 			"include": "#strings"
 		}
@@ -26,22 +28,25 @@
 		"keywords": {
 			"patterns": [{
 				"name": "keyword.control",
-				"match": "\\b(if|else|return|def|include|let|class|val|extern|new|while|match)\\b"
+				"match": "\\b(if|else|return|def|include|let|class|val|extern|new|while|match|as|and|or|enum)\\b"
 			}, {
 				"name": "support.type",
-				"match": "\\b(int|bool|ptr|fun)\\b"
+				"match": "\\b(int|bool|ptr|fun|char|Str)\\b"
 			}, {
 				"name": "constant.language",
 				"match": "\\b(true|false|self)\\b"
 			}, {
 				"name": "keyword.operator",
-				"match": ",|:|\\+|\\*|->|-|=>|==|!=|<=|>=|<|>|\\.|="
+				"match": ",|:|\\+|\\*|->|-|=>|==|!=|<=|>=|<|>|\\.|=|!=|!"
 			}]
 		},
 		"literal": {
 			"patterns": [{
 				"name": "constant.numeric",
 				"match": "\\b[0-9]+\\b"
+			}, {
+				"name": "constant.character",
+				"match": "'.'"
 			}]
 		},
 		"class": {
@@ -56,6 +61,14 @@
 			"captures": {
 				"1": { "name": "keyword.control "},
 				"2": { "name": "variable" }
+			}
+		},
+		"class_val": {
+			"match": "\\b(val)\\s+(\\w+)\\s*:\\s*(\\w+)\\b",
+			"captures": {
+				"1": { "name": "keyword.control" },
+				"2": { "name": "variable" },
+				"3": { "name": "support.type" }
 			}
 		},
 		"comment": {
