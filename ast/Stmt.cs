@@ -37,16 +37,8 @@ namespace RoisLang.ast
             }
             return new IfStmt(If.Item1, If.Item2, tree);
         }
-        public static Stmt Build(List<(Expr, Stmt[])> ElseIfs, Stmt Else)
-        {
-            Stmt tree = Else;
-            for (int i = ElseIfs.Count - 1; i >= 0; i--)
-            {
-                var stmt = new IfStmt(ElseIfs[i].Item1, ElseIfs[i].Item2, new Stmt[] { tree });
-                tree = stmt;
-            }
-            return tree;
-        }
+        public static Stmt Build(List<(Expr, Stmt[])> ElseIfs)
+            => Build(ElseIfs[0], ElseIfs.Skip(1).ToArray(), Array.Empty<Stmt>());
     }
     public record WhileStmt : Stmt
     {

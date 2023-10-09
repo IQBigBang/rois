@@ -75,7 +75,7 @@ namespace RoisLang.lower
             var compiledCasesList = new List<(Expr, Stmt[])>();
             foreach (var case_ in stmt.Cases)
                 compiledCasesList.Add(LowerCase(case_.Item1, scrName, stmt.Scrutinee.Ty!, case_.Item2));
-            var compiledCases = IfStmt.Build(compiledCasesList, new DiscardStmt(new FailExpr(stmt.Scrutinee.Pos)));
+            var compiledCases = IfStmt.Build(compiledCasesList);
             yield return scrNameExpr;
             yield return compiledCases;
         }
