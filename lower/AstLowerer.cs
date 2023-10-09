@@ -172,6 +172,22 @@ namespace RoisLang.lower
                         Builder.BuildFail("Failure");
                         return MidValue.Null();
                     }
+                case CastAsExpr castExpr:
+                    {
+                        var value = LowerExpr(castExpr.Value);
+                        switch (castExpr.Value.Ty, castExpr.CastType)
+                        {
+                            // bool -> int   = bitcast
+                            // char -> int   = bitcast
+                            // int -> char   = bitcast (?)
+                            case (BoolType, IntType):
+                            case (CharType, IntType):
+                            case (IntType, CharType):
+                                return Builder.BuildBitcast(value, castExpr.CastType);
+                            default:
+                                throw new NotImplementedException();
+                        }
+                    }
                 default:
                     throw new NotImplementedException();
             }

@@ -1,4 +1,5 @@
 ﻿using RoisLang.mid_ir;
+using RoisLang.types;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -78,6 +79,24 @@ namespace RoisLang.opt
                             else
                                 ReplaceInstr(i, (builder) =>
                                     builder.BuildGoto(branchInstr.Else.TargetBlockId, branchInstr.Else.Arguments));
+                        }
+                        break;
+                    case MidBitcastInstr bitcastInstr:
+                        if (!bitcastInstr.Val.IsConst) break;
+                        switch (bitcastInstr.Val.GetType(), bitcastInstr.TargetType)
+                        {
+                            // bool -> int   = bitcast
+                            case (BoolType, IntType):
+                                ReplaceInstrWithConstant(bitcastInstr.Out, MidValue.ConstInt(bitcastInstr.Val.GetBoolValue() ? 1 : 0));
+                                break;
+                            // char -> int   = bitcast
+                            case (CharType, IntType):
+                                ReplaceInstrWithConstant(bitcastInstr.Out, MidValue.ConstInt((int) bitcastInstr.Val.GetCharValue()));
+                                break;
+                            // int -> char   = bitcast (?)
+                            case (IntType, CharType):
+                                ReplaceInstrWithConstant(bitcastInstr.Out, MidValue.ConstChar((uint) bitcastInstr.Val.GetIntValue()));
+                                break;
                         }
                         break;
                     // Cannot be constant-folded

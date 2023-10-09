@@ -287,6 +287,22 @@ namespace RoisLang.types
                         mCallExpr.Ty = method.Ret;
                     }
                     break;
+                case CastAsExpr castExpr:
+                    {
+                        // castAs provides cheap and safe conversions
+                        // int <- bool
+                        // char <-> int
+                        var valueType = TypeckExpr(castExpr.Value);
+                        if (valueType.IsInt && castExpr.CastType is CharType)
+                            castExpr.Ty = castExpr.CastType;
+                        else if (valueType is CharType && castExpr.CastType is IntType)
+                            castExpr.Ty = castExpr.CastType;
+                        else if (valueType.IsBool && castExpr.CastType is IntType)
+                            castExpr.Ty = castExpr.CastType;
+                        else
+                            throw CompilerError.ValidationErr($"Invalid cast from {valueType} to {castExpr.CastType}", castExpr.Pos);
+                    }
+                    break;
                 default:
                     throw new NotImplementedException();
             }

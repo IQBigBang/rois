@@ -71,6 +71,7 @@ namespace RoisLang.parser
         KwInclude,
         KwWhile,
         KwMatch,
+        KwAs,
     }
 
     public class Lexer
@@ -311,6 +312,8 @@ namespace RoisLang.parser
                 tokens.Add(SimpleToken(Token.KwWhile, 5));
             else if (s == "match")
                 tokens.Add(SimpleToken(Token.KwMatch, 5));
+            else if (s == "as")
+                tokens.Add(SimpleToken(Token.KwAs, 2));
             else
                 tokens.Add(SimpleToken(Token.Sym, len));
         }

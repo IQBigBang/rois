@@ -84,4 +84,9 @@ namespace RoisLang.ast
     {   /* TODO */
         public override bool IsValidLhs() => false;
     }
+
+    public record CastAsExpr(Expr Value, TypeRef CastType, SourcePos Pos) : Expr(Pos)
+    {
+        public override bool IsValidLhs() => false;
+    }
 }

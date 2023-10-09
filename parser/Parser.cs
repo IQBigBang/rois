@@ -88,8 +88,13 @@ namespace RoisLang.parser
                                               .Value((Expr)new CallExpr(atom, args, atom.Pos))
                                 ).OptionalOrDefault(atom));
 
+        private static readonly TokenListParser<Token, Expr> Cast =
+            Call.Then(e => Superpower.Parsers.Token.EqualTo(Token.KwAs).Then(
+                                asKw => TypeName.Select(x => (Expr)new CastAsExpr(e, x, Trace(asKw))))
+                            .OptionalOrDefault(e));
+
         private static readonly TokenListParser<Token, Expr> Factor =
-            Call.Chain(Superpower.Parsers.Token.EqualTo(Token.Star), Call,
+            Cast.Chain(Superpower.Parsers.Token.EqualTo(Token.Star), Cast,
                 (op, lhs, rhs) => new BinOpExpr(lhs, rhs, BinOpExpr.Ops.Mul, Trace(op)));
 
         private static readonly TokenListParser<Token, Expr> AddSubExpr =

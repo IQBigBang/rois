@@ -137,5 +137,11 @@ namespace RoisLang.mid_ir.builder
             var instr = new mid_ir.MidAndInstr { Out = MidValue.Null(), Lhs = lhs, Rhs = rhs };
             return currentBlock!.AddInstr(instr, IncrementPos);
         }
+
+        public MidValue BuildBitcast(MidValue val, TypeRef target)
+        {
+            var instr = new mid_ir.MidBitcastInstr { Out = MidValue.Null(), Val = val, TargetType = target };
+            return currentBlock!.AddInstr(instr, IncrementPos);
+        }
     }
 }

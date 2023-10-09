@@ -41,6 +41,7 @@ namespace RoisLang.mid_ir
         public static MidValue Null() => new(0, 0, TypeRef.UNKNOWN);
         public static MidValue ConstInt(int val) => new(1, new IntValue(val), TypeRef.INT);
         public static MidValue ConstBool(bool val) => new(1, new BoolValue(val), TypeRef.BOOL);
+        public static MidValue ConstChar(uint ch) => new(1, new CharValue(ch), TypeRef.CHAR);
         /// <summary>
         /// Every register value SHOULD be a singleton!
         /// </summary>
@@ -54,6 +55,7 @@ namespace RoisLang.mid_ir
         public bool IsConst => tag == 1;
         public bool IsConstInt => IsConst && value is IntValue;
         public bool IsConstBool => IsConst && value is BoolValue;
+        public bool IsConstChar => IsConst && value is CharValue;
         public bool IsReg => tag == 2;
         public bool IsGlobal => tag == 3;
         
@@ -81,6 +83,12 @@ namespace RoisLang.mid_ir
             else throw new InvalidOperationException();
         }
 
+        public uint GetCharValue()
+        {
+            if (IsConstChar) return ((CharValue)value).Value;
+            else throw new InvalidOperationException();
+        }
+
         public MidFunc GetGlobalValue()
         {
             if (IsGlobal) return (MidFunc)value;
@@ -98,6 +106,8 @@ namespace RoisLang.mid_ir
                     return GetIntValue() == other.GetIntValue();
                 if (IsConstBool)
                     return GetBoolValue() == other.GetBoolValue();
+                if (IsConstChar)
+                    return GetCharValue() == other.GetCharValue();
                 if (IsReg)
                     // TODO: should we check types for equality (?)
                     return GetRegNum() == other.GetRegNum() && GetBasicBlock() == other.GetBasicBlock();
@@ -161,5 +171,21 @@ namespace RoisLang.mid_ir
             Value = value;
         }
         public override string ToString() => Value ? "true" : "false";
+    }
+    public struct CharValue : IConstValue
+    {
+        // char is a 32-bit value in Rois
+        public uint Value;
+        public CharValue(uint value)
+        {
+            Value = value;
+        }
+        public override string ToString() 
+        {
+            if (Rune.TryCreate(Value, out Rune r))
+                return $"'{r}'";
+            else
+                return Value.ToString();
+        }
     }
 }

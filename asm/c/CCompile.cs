@@ -223,6 +223,9 @@ namespace RoisLang.asm.c
                 case MidFailInstr failInstr:
                     _out.WriteLine($"__rtfail(\"{failInstr.FailText}\");");
                     break;
+                case MidBitcastInstr bitcastInstr:
+                    _out.WriteLine(Declare(bitcastInstr.Out) + $" = (({PrintTy(bitcastInstr.TargetType)}) {Print(bitcastInstr.Val)});");
+                    break;
                 default:
                     throw new NotImplementedException();
             }
@@ -237,6 +240,7 @@ namespace RoisLang.asm.c
         {
             if (val.IsConstInt) return $"((I32){val.GetIntValue()})";
             if (val.IsConstBool) return val.GetBoolValue() ? "true" : "false";
+            if (val.IsConstChar) return $"((CHAR){(int)val.GetCharValue()})";
             if (val.IsReg) return NameMangle.LocalName(val);
             if (val.IsGlobal)
             {
