@@ -190,6 +190,9 @@ namespace RoisLang.types
                 case ast.BoolLit:
                     expr.Ty = TypeRef.BOOL;
                     break;
+                case ast.CharLit:
+                    expr.Ty = TypeRef.CHAR;
+                    break;
                 case ast.StrLit:
                     expr.Ty = StrClass!.Type!;
                     break;

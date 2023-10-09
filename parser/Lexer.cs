@@ -21,6 +21,7 @@ namespace RoisLang.parser
         // symbol (name)
         Sym,
         StrLit,
+        CharLit,
         // '='
         Assign,
         // (
@@ -186,6 +187,8 @@ namespace RoisLang.parser
                     LexSymbol();
                 else if (ch == '"')
                     LexStrLit();
+                else if (ch == '\'')
+                    LexChar();
                 else
                 {
                     tokens.Add(SimpleToken(Token.Error, 1));
@@ -251,6 +254,14 @@ namespace RoisLang.parser
                 tokens.Add(new Superpower.Model.Token<Token>(Token.Indent, Span(0)));
                 currentIndent++;
             }
+        }
+
+        private void LexChar()
+        {
+            // Source[Pos] is '
+            if (Pos + 2 >= Source.Length || Source[Pos + 2] != '\'')
+                throw CompilerError.ParseErr("Nonterminated char literal", new SourcePos(Span(1).Position.Line, Span(1).Position.Column));
+            tokens.Add(SimpleToken(Token.CharLit, 3));
         }
 
         private void LexStrLit()

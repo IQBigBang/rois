@@ -101,6 +101,8 @@ namespace RoisLang.lower
                     return MidValue.ConstInt(intExpr.Value);
                 case ast.BoolLit boolExpr:
                     return MidValue.ConstBool(boolExpr.Value);
+                case CharLit charExpr:
+                    return MidValue.ConstChar((uint)charExpr.Ch);
                 case StrLit strExpr:
                     {
                         // create the raw string

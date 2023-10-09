@@ -28,6 +28,11 @@ namespace RoisLang.ast
         public override bool IsValidLhs() => false;
     }
 
+    public record CharLit(char Ch, SourcePos Pos) : Expr(Pos)
+    {
+        public override bool IsValidLhs() => false;
+    }
+
     public record StrLit(string Text, SourcePos Pos) : Expr(Pos)
     {
         public override bool IsValidLhs() => false;

@@ -63,6 +63,7 @@ namespace RoisLang.parser
             .Or(Superpower.Parsers.Token.EqualTo(Token.KwTrue).Select(t => (Expr)new BoolLit(true, Trace(t))))
             .Or(Superpower.Parsers.Token.EqualTo(Token.KwFalse).Select(t => (Expr)new BoolLit(false, Trace(t))))
             .Or(Superpower.Parsers.Token.EqualTo(Token.StrLit).Select(s => (Expr)new StrLit(s.ToStringValue()[1..^1], Trace(s))))
+            .Or(Superpower.Parsers.Token.EqualTo(Token.CharLit).Select(s => (Expr)new CharLit(s.ToStringValue()[1], Trace(s))))
             .Or(Constructor)
             // `Lazy` must be used to add a level of indirection (because the `Expr` field is not initialized at the moment)
             .Or(Lazy(GetExpr).Between(Superpower.Parsers.Token.EqualTo(Token.LParen), Superpower.Parsers.Token.EqualTo(Token.RParen)));
