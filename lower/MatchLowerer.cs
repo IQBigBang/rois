@@ -69,32 +69,58 @@ namespace RoisLang.lower
         /// </summary>
         private IEnumerable<Stmt> LowerMatch(MatchStmt stmt)
         {
-            var scrName = "__scr" + Random.Shared.Next(1000, 10000);
-            // TODO: failure case
-            var scrNameExpr = new LetAssignStmt(scrName, stmt.Scrutinee);
+            // the scrutinee must have no side effects, if it's a complex expression assign it to a variable
+            Expr scr;
+            if (stmt.Scrutinee is VarExpr)
+                scr = stmt.Scrutinee;
+            else
+            {
+                var scrName = "__scr" + Random.Shared.Next(1000, 10000);
+                var scrNameExpr = new LetAssignStmt(scrName, stmt.Scrutinee);
+                yield return scrNameExpr;
+                scr = new VarExpr(scrName, stmt.Scrutinee.Ty, stmt.Scrutinee.Pos);
+            }
+
             var compiledCasesList = new List<(Expr, Stmt[])>();
             foreach (var case_ in stmt.Cases)
-                compiledCasesList.Add(LowerCase(case_.Item1, scrName, stmt.Scrutinee.Ty!, case_.Item2));
+                compiledCasesList.Add(LowerCase(case_.Item1, scr, case_.Item2));
             var compiledCases = IfStmt.Build(compiledCasesList);
-            yield return scrNameExpr;
             yield return compiledCases;
         }
 
         // returns (condition, amendedBody)
-        private (Expr, Stmt[]) LowerCase(Patt patt, string scrName, types.TypeRef scrTy, Stmt[] body)
+        // the scrutinee expression must have no side effects (!)
+        private (Expr, Stmt[]) LowerCase(Patt patt, Expr scr, Stmt[] body)
         {
+            if (patt is ObjectPatt op)
+            {
+                // object patt itself does no checking, but its subpatterns may
+                Expr condExpr = new BoolLit(true, patt.Pos);
+                for (int i = 0; i < op.Members.Length; i++)
+                {
+                    var memberExpr = new MemberExpr(scr, op.ClsType!.Fields[i].Item1, patt.Pos);
+                    memberExpr.Ty = op.ClsType!.Fields[i].Item2;
+                    var (subPattExpr, subPattBody) = LowerCase(op.Members[i], memberExpr, body);
+                    body = subPattBody;
+                    condExpr.Ty = types.TypeRef.BOOL;
+                    condExpr = new BinOpExpr(condExpr, subPattExpr, BinOpExpr.Ops.And, op.Pos);
+                }
+                condExpr.Ty = types.TypeRef.BOOL;
+                return (condExpr, body);
+            }
+
             Expr cond = patt switch
             {
                 AnyPatt or NamePatt => new BoolLit(true, patt.Pos), // no checking
                 // scr == int
-                IntLitPatt il => new BinOpExpr(new VarExpr(scrName, scrTy, il.Pos), new IntExpr(il.Val, il.Pos), BinOpExpr.Ops.CmpEq, il.Pos),
+                IntLitPatt il => new BinOpExpr(scr, new IntExpr(il.Val, il.Pos), BinOpExpr.Ops.CmpEq, il.Pos),
                 _ => throw new NotImplementedException(),
             };
             cond.Ty = types.TypeRef.BOOL;
             // ammend the body if needed
             if (patt is NamePatt namePatt)
                 body = body.Prepend(
-                    new LetAssignStmt(namePatt.Name, new VarExpr(scrName, scrTy, patt.Pos))
+                    new LetAssignStmt(namePatt.Name, scr)
                     ).ToArray();
             return (cond, body);
         }

@@ -58,5 +58,9 @@ namespace RoisLang.ast
         public record AnyPatt(SourcePos Pos) : Patt(Pos);
         public record IntLitPatt(int Val, SourcePos Pos) : Patt(Pos);
         public record NamePatt(string Name, SourcePos Pos) : Patt(Pos);
+        public record ObjectPatt(string ObjName, Patt[] Members, SourcePos Pos) : Patt(Pos)
+        {
+            public types.ClassType? ClsType;
+        }
     }
 }

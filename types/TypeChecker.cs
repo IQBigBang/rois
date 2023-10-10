@@ -14,6 +14,7 @@ namespace RoisLang.types
         private ScopedDictionary<string, TypeRef> Symbols;
         // this is for looking up methods
         private Dictionary<ClassType, ClassDef> ClassesTable;
+        private ast.Program? CurrProgram;
         private ClassDef? StrClass;
         private TypeRef? Ret;
 
@@ -27,6 +28,7 @@ namespace RoisLang.types
         public void TypeckProgram(ast.Program program)
         {
             Symbols.Reset();
+            CurrProgram = program;
             StrClass = program.Classes.FirstOrDefault(c => c.Name == "Str") ?? throw CompilerError.NameErr("No Str class defined", SourcePos.Zero);
 
             foreach (var func in program.Functions)
@@ -174,6 +176,22 @@ namespace RoisLang.types
                     return;
                 case MatchStmt.IntLitPatt intPatt:
                     if (!expectedType.IsInt) throw CompilerError.TypeErr("Int pattern expects integer value", patt.Pos);
+                    return;
+                case MatchStmt.ObjectPatt objectPatt:
+                    {
+                        // find the appropriate class
+                        ClassDef cls = CurrProgram!.Classes.FirstOrDefault(cls => cls.Name == objectPatt.ObjName) ??
+                                            throw CompilerError.NameErr("Class couldn't be found", objectPatt.Pos);
+                        if (!cls.Type!.Equal(expectedType))
+                            throw CompilerError.TypeErr("Pattern doesn't match the scrutinee type", objectPatt.Pos);
+                        if (cls.Fields.Length != objectPatt.Members.Length)
+                            throw CompilerError.TypeErr("Object pattern has more or less members than the type", objectPatt.Pos);
+                        for (int i = 0; i < cls.Fields.Length; i++)
+                        {
+                            TypeckPatt(objectPatt.Members[i], cls.Fields[i].Item1);
+                        }
+                        objectPatt.ClsType = cls.Type!;
+                    }
                     return;
                 default:
                     throw new NotImplementedException();

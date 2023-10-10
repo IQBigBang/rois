@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static RoisLang.ast.MatchStmt;
 
 namespace RoisLang.parser
 {
@@ -182,13 +183,18 @@ namespace RoisLang.parser
                           .IgnoreThen(GetBlock())
                           .Select(block => (Stmt)new WhileStmt(cond, block)));
 
-        private static readonly TokenListParser<Token, MatchStmt.Patt> ParsePatt =
-            Superpower.Parsers.Token.EqualTo(Token.Sym).Select(sym =>
-            {
-                if (sym.ToStringValue() == "_") return new MatchStmt.AnyPatt(Trace(sym));
-                else return (MatchStmt.Patt)new MatchStmt.NamePatt(sym.ToStringValue(), Trace(sym));
-            }).Or(Superpower.Parsers.Token.EqualTo(Token.Int)
-                .Select(n => (MatchStmt.Patt)new MatchStmt.IntLitPatt(int.Parse(n.ToStringValue()), Trace(n))));
+        private static readonly TokenListParser<Token, Patt> ParseObjectPatt =
+            Superpower.Parsers.Token.EqualTo(Token.Sym)
+            .Then(clsName => Superpower.Parsers.Token.EqualTo(Token.LParen)
+                               .IgnoreThen(ParsePatt.ManyDelimitedBy(Superpower.Parsers.Token.EqualTo(Token.Comma)))
+                               .Then(subPatterns => Superpower.Parsers.Token.EqualTo(Token.RParen).Value(
+                                   (Patt)new ObjectPatt(clsName.ToStringValue(), subPatterns, Trace(clsName)))));
+
+        private static readonly TokenListParser<Token, Patt> ParsePatt =
+            Superpower.Parsers.Token.EqualToValue(Token.Sym, "_").Select(x => (Patt)new AnyPatt(Trace(x)))
+            .Or(Superpower.Parsers.Token.EqualTo(Token.Int).Select(n => (Patt)new IntLitPatt(int.Parse(n.ToStringValue()), Trace(n))))
+            .Or(ParseObjectPatt)
+            .Or(Superpower.Parsers.Token.EqualTo(Token.Sym).Select(sym => (Patt)new NamePatt(sym.ToStringValue(), Trace(sym))));
 
         private static readonly TokenListParser<Token, (MatchStmt.Patt, Stmt[])> ParseMatchCase =
             ParsePatt.Then(patt =>
