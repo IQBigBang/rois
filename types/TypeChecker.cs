@@ -13,7 +13,7 @@ namespace RoisLang.types
     {
         private ScopedDictionary<string, TypeRef> Symbols;
         // this is for looking up methods
-        private Dictionary<ClassType, ClassDef> ClassesTable;
+        private Dictionary<NamedType, ClassDef> ClassesTable;
         private ast.Program? CurrProgram;
         private ClassDef? StrClass;
         private TypeRef? Ret;
@@ -21,7 +21,7 @@ namespace RoisLang.types
         public TypeChecker()
         {
             Symbols = new ScopedDictionary<string, TypeRef>();
-            ClassesTable = new Dictionary<ClassType, ClassDef>();
+            ClassesTable = new Dictionary<NamedType, ClassDef>();
             Ret = null;
         }
 
@@ -279,13 +279,13 @@ namespace RoisLang.types
                 case MemberExpr memberExpr:
                     {
                         var objectType = TypeckExpr(memberExpr.Object);
-                        if (!objectType.IsClass)
+                        if (!objectType.IsStructClass)
                             throw CompilerError.TypeErr("Non-object types don't have members", memberExpr.Object.Pos);
-                        foreach (var field in ((ClassType)objectType).Fields)
+                        foreach (var field in ((NamedType)objectType).Fields)
                         {
-                            if (field.Item1 == memberExpr.MemberName)
+                            if (field.Item2 == memberExpr.MemberName)
                             {
-                                memberExpr.Ty = field.Item2;
+                                memberExpr.Ty = field.Item1;
                                 break;
                             }
                         }
@@ -299,7 +299,7 @@ namespace RoisLang.types
                             throw CompilerError.ValidationErr("All fields must be initialized in a constructor", constrExpr.Pos);
                         for (int i = 0; i < constrExpr.Fields.Count; ++i)
                         {
-                            var (fieldName, fieldType) = constrExpr.Class.Fields[i];
+                            var (fieldType, fieldName) = constrExpr.Class.Fields[i];
                             var fieldExpr = constrExpr.Fields.GetValueOrDefault(fieldName) 
                                 ?? throw CompilerError.ValidationErr("All fields must be initialized in a constructor", constrExpr.Pos);
                             if (!TypeckExpr(fieldExpr).Equal(fieldType))
@@ -311,9 +311,9 @@ namespace RoisLang.types
                 case MethodCallExpr mCallExpr:
                     {
                         var obj = TypeckExpr(mCallExpr.Object);
-                        if (!obj.IsClass)
+                        if (!obj.IsStructClass) // TODO: enum class methods
                             throw CompilerError.TypeErr("Non-object types don't have methods", mCallExpr.Object.Pos);  // TODO ?
-                        var classDef = ClassesTable[(ClassType)obj];
+                        var classDef = ClassesTable[(NamedType)obj];
                         Func? method = null;
                         foreach (var m in classDef.Methods)
                             if (m.Name == mCallExpr.methodName) method = m;

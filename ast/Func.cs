@@ -31,13 +31,23 @@ namespace RoisLang.ast
         }
     }
 
-    public class ClassDef
+    public interface UserTypeDef
     {
-        public string Name;
+        public string Name { get; }
+        public TypeRef? Type { get; set; }
+        public SourcePos Pos { get; }
+    }
+
+    public class ClassDef : UserTypeDef
+    {
+        public readonly string Name;
+        string UserTypeDef.Name => Name;
         public (TypeRef, string)[] Fields;
-        public ClassType? Type;
+        public NamedType? Type;
+        TypeRef? UserTypeDef.Type { get => Type; set => Type = (NamedType)value!; }
         public Func[] Methods;
         public SourcePos Pos;
+        SourcePos UserTypeDef.Pos => Pos;
 
         public ClassDef(string name, (TypeRef, string)[] fields, Func[] methods, SourcePos pos)
         {
@@ -50,12 +60,12 @@ namespace RoisLang.ast
 
     public class Program
     {
-        public ClassDef[] Classes;
+        public UserTypeDef[] UserTypes;
         public Func[] Functions;
 
-        public Program(ClassDef[] classes, Func[] functions)
+        public Program(UserTypeDef[] classes, Func[] functions)
         {
-            Classes = classes;
+            UserTypes = classes;
             Functions = functions;
         }
     }

@@ -44,7 +44,7 @@ namespace RoisLang.asm.c
             {
                 _out.WriteLine($"struct struct_{cls.Name} {{");
                 foreach (var field in cls.Fields)
-                    _out.WriteLine($"{PrintTy(field.Item2)} {field.Item1};");
+                    _out.WriteLine($"{PrintTy(field.Item1)} {field.Item2};");
                 _out.WriteLine("};");
             }
             // Function declarations

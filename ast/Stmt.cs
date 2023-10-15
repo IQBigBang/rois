@@ -60,7 +60,7 @@ namespace RoisLang.ast
         public record NamePatt(string Name, SourcePos Pos) : Patt(Pos);
         public record ObjectPatt(string ObjName, Patt[] Members, SourcePos Pos) : Patt(Pos)
         {
-            public types.ClassType? ClsType;
+            public types.NamedType? ClsType;
         }
     }
 }

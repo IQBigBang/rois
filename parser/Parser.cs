@@ -42,7 +42,7 @@ namespace RoisLang.parser
               .Or(Superpower.Parsers.Token.EqualToValue(Token.Sym, "ptr").Value(TypeRef.PTR))
               .Or(Superpower.Parsers.Token.EqualToValue(Token.Sym, "char").Value(TypeRef.CHAR))
               .Or(FunTypeName)
-              .Or(Superpower.Parsers.Token.EqualTo(Token.Sym).Select(name => (TypeRef)instance!.typeBuilder.GetClassType(name.ToStringValue())));
+              .Or(Superpower.Parsers.Token.EqualTo(Token.Sym).Select(name => (TypeRef)instance!.typeBuilder.GetNamedType(name.ToStringValue())));
 
         private static readonly TokenListParser<Token, KeyValuePair<string, Expr>> ConstructorArg =
             Superpower.Parsers.Token.EqualTo(Token.Sym)
@@ -52,7 +52,7 @@ namespace RoisLang.parser
 
         private static readonly TokenListParser<Token, Expr> Constructor =
             Superpower.Parsers.Token.EqualTo(Token.KwNew)
-            .IgnoreThen(Superpower.Parsers.Token.EqualTo(Token.Sym).Select(name => (instance!.typeBuilder.GetClassType(name.ToStringValue()), Trace(name))))
+            .IgnoreThen(Superpower.Parsers.Token.EqualTo(Token.Sym).Select(name => (instance!.typeBuilder.GetNamedType(name.ToStringValue()), Trace(name))))
             .Then(x => Superpower.Parsers.Token.EqualTo(Token.LParen)
                         .IgnoreThen(ConstructorArg.ManyDelimitedBy(Superpower.Parsers.Token.EqualTo(Token.Comma)))
                         .Then(arguments => Superpower.Parsers.Token.EqualTo(Token.RParen)
@@ -267,15 +267,14 @@ namespace RoisLang.parser
             .IgnoreThen(Superpower.Parsers.Token.EqualTo(Token.Sym))
             .Then(fieldName => Superpower.Parsers.Token.EqualTo(Token.Colon)
                                 .IgnoreThen(TypeName)
-                                .Then(type => Superpower.Parsers.Token.EqualTo(Token.Nl)
-                                              .Value((type, fieldName.ToStringValue()))));
+                                .Select(type => (type, fieldName.ToStringValue())));
 
         private static readonly TokenListParser<Token, ClassDef> ParseClassDef =
             Superpower.Parsers.Token.EqualTo(Token.KwClass)
             .IgnoreThen(Superpower.Parsers.Token.EqualTo(Token.Sym))
             .Then(className =>
                 Superpower.Parsers.Token.Sequence(Token.Colon, Token.Nl, Token.Indent)
-                .IgnoreThen(ParseField.Many())
+                .IgnoreThen(ParseField.Then(x => Superpower.Parsers.Token.EqualTo(Token.Nl).Value(x)).Many())
                 .Then(fields => ParseFuncDef.Many()
                                 .Then(methods => 
                                     Superpower.Parsers.Token.EqualTo(Token.Dedent)
@@ -295,7 +294,7 @@ namespace RoisLang.parser
                 .Many()
                 .Select(xs => 
                 {
-                    var classes = xs.Where(x => x is ClassDef).Select(x => (ClassDef)x).ToArray();
+                    var classes = xs.Where(x => x is UserTypeDef).Select(x => (UserTypeDef)x).ToArray();
                     var funcs = xs.Where(x => x is Func).Select(x => (Func)x).ToArray();
                     return (includes, new ast.Program(classes, funcs));
                 }))

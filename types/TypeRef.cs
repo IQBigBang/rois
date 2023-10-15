@@ -12,7 +12,7 @@ namespace RoisLang.types
         public bool IsInt => this is IntType;
         public bool IsFunc => this is FuncType;
         public bool IsBool => this is BoolType;
-        public bool IsClass => this is ClassType;
+        public bool IsStructClass => this is NamedType nt && nt.IsStructClass;
 
         public static readonly TypeRef UNKNOWN = new TypeUnknown();
         public static readonly TypeRef INT = new IntType();
@@ -47,8 +47,8 @@ namespace RoisLang.types
                 }
                 return true;
             }
-            if (IsClass && other.IsClass)
-                return ((ClassType)this).Name == ((ClassType)other).Name;
+            if (this is NamedType nt1 && other is NamedType nt2)
+                return nt1.Name == nt2.Name;
             return false;
         }
     }

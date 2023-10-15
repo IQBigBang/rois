@@ -98,8 +98,8 @@ namespace RoisLang.lower
                 Expr condExpr = new BoolLit(true, patt.Pos);
                 for (int i = 0; i < op.Members.Length; i++)
                 {
-                    var memberExpr = new MemberExpr(scr, op.ClsType!.Fields[i].Item1, patt.Pos);
-                    memberExpr.Ty = op.ClsType!.Fields[i].Item2;
+                    var memberExpr = new MemberExpr(scr, op.ClsType!.Fields[i].Item2, patt.Pos);
+                    memberExpr.Ty = op.ClsType!.Fields[i].Item1;
                     var (subPattExpr, subPattBody) = LowerCase(op.Members[i], memberExpr, body);
                     body = subPattBody;
                     condExpr.Ty = types.TypeRef.BOOL;

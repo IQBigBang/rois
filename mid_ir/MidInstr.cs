@@ -295,13 +295,13 @@ namespace RoisLang.mid_ir
         }
     }
 
-    public record FieldInfo(ClassType Class, int FieldN)
+    public record FieldInfo(NamedType Class, int FieldN)
     {
-        public FieldInfo(ClassType class_, string fieldName)
-            : this(class_, Array.FindIndex(class_.Fields, x => x.Item1 == fieldName)) { }
-        public override string ToString() => $"{Class}.{Class.Fields[FieldN].Item1}";
-        public TypeRef FieldType() => Class.Fields[FieldN].Item2;
-        public string FieldName() => Class.Fields[FieldN].Item1;
+        public FieldInfo(NamedType class_, string fieldName)
+            : this(class_, Array.FindIndex(class_.Fields, x => x.Item2 == fieldName)) { }
+        public override string ToString() => $"{Class}.{Class.Fields[FieldN].Item2}";
+        public TypeRef FieldType() => Class.Fields[FieldN].Item1;
+        public string FieldName() => Class.Fields[FieldN].Item2;
     }
 
     public class MidLoadInstr : MidInstr
@@ -350,7 +350,7 @@ namespace RoisLang.mid_ir
 
     public class MidAllocClassInstr : MidInstr
     {
-        public ClassType Class;
+        public NamedType Class;
         public MidValue Out;
 
         public override bool HasOut() => true;

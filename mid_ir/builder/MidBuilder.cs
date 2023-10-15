@@ -104,7 +104,7 @@ namespace RoisLang.mid_ir.builder
         }
 
         public MidValue BuildLoad(MidValue obj, string fieldName)
-            => BuildLoad(new FieldInfo((ClassType)obj.GetType(), fieldName), obj);
+            => BuildLoad(new FieldInfo((NamedType)obj.GetType(), fieldName), obj);
         public MidValue BuildLoad(FieldInfo fieldInfo, MidValue obj)
         {
             var instr = new MidLoadInstr { FieldInfo = fieldInfo, Object = obj, Out = MidValue.Null() };
@@ -112,14 +112,14 @@ namespace RoisLang.mid_ir.builder
         }
 
         public void BuildStore(MidValue obj, MidValue val, string fieldName)
-            => BuildStore(new FieldInfo((ClassType)obj.GetType(), fieldName), obj, val);
+            => BuildStore(new FieldInfo((NamedType)obj.GetType(), fieldName), obj, val);
         public void BuildStore(FieldInfo fieldInfo, MidValue obj, MidValue val)
         {
             var instr = new MidStoreInstr { FieldInfo = fieldInfo, Object = obj, Value = val };
             currentBlock!.AddInstr(instr, IncrementPos);
         }
 
-        public MidValue BuildAllocClass(ClassType cls)
+        public MidValue BuildAllocClass(NamedType cls)
         {
             var instr = new MidAllocClassInstr { Class = cls, Out = MidValue.Null() };
             return currentBlock!.AddInstr(instr, IncrementPos);

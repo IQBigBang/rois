@@ -17,7 +17,7 @@ namespace RoisLang.lower
         private MidBuilder Builder;
         private ScopedDictionary<string, MidValue> Symbols;
         private Dictionary<ValueTuple<string, string>, MidValue> Methods;
-        private ClassType? StrType;
+        private NamedType? StrType;
 
         public AstLowerer()
         {
@@ -177,7 +177,7 @@ namespace RoisLang.lower
                 case MethodCallExpr mCallExpr:
                     {
                         var obj = LowerExpr(mCallExpr.Object);
-                        var cls = (ClassType)obj.GetType();
+                        var cls = (NamedType)obj.GetType();
                         var method = Methods[(cls.Name, mCallExpr.methodName)];
                         var arguments = new List<MidValue> { obj }.Concat(mCallExpr.Args.Select(x => LowerExpr(x))).ToArray();
                         return Builder.BuildCall(method, arguments);

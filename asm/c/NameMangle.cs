@@ -87,7 +87,7 @@ namespace RoisLang.asm.c
                 BoolType => "bool",
                 VoidType => "void", // TODO
                 PtrType => "PTR",
-                ClassType cls => $"T_{NamespacedName(cls.Name)}",
+                NamedType nt => nt.IsStructClass ? $"T_{NamespacedName(nt.Name)}" : throw new NotImplementedException(),
                 FuncType ft => MangleTypeAsPartOfName(ft), // the scheme is identical for function types (on purpose)
             };
 
@@ -116,8 +116,8 @@ namespace RoisLang.asm.c
                 s += "_" + MangleTypeAsPartOfName(ftype.Ret);
                 return s;
             }
-            if (tr.IsClass)
-                return "C" + NamespacedName(((ClassType)tr).Name);
+            if (tr.IsStructClass)
+                return "C" + NamespacedName(((NamedType)tr).Name);
             throw new NotImplementedException();
         }
     }

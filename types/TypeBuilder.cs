@@ -10,37 +10,37 @@ namespace RoisLang.types
 {
     internal class TypeBuilder
     {
-        private readonly Dictionary<string, (ClassType, bool)> classes;
+        private readonly Dictionary<string, (NamedType, bool)> classes;
 
         public TypeBuilder() 
         {
             classes = new();
         }
 
-        public ClassType GetClassType(string name)
+        public NamedType GetNamedType(string name)
         {
-            if (classes.TryGetValue(name, out (ClassType, bool) result))
+            if (classes.TryGetValue(name, out (NamedType, bool) result))
                 return result.Item1;
-            var k = new ClassType(name);
+            var k = new NamedType(name);
             classes.Add(name, (k, false));
             return k;
         }
 
-        public void InitializeAll(IEnumerable<ClassDef> classDefs)
+        public void InitializeAll(IEnumerable<UserTypeDef> userTypeDefs)
         {
-            foreach (var cls in classDefs)
+            foreach (var cls in userTypeDefs)
             {
-                GetClassType(cls.Name); // this ensures that the class exists in the list
+                GetNamedType(cls.Name); // this ensures that the class exists in the list
                 var k = classes[cls.Name];
-                if (k.Item2 == true) throw CompilerError.NameErr($"Class `{cls.Name}` defined twice", cls.Pos);
-                k.Item1.Fields = cls.Fields.Select(x => (x.Item2, x.Item1)).ToArray();
+                if (k.Item2 == true) throw CompilerError.NameErr($"Type `{cls.Name}` defined twice", cls.Pos);
+                k.Item1.Def = cls;
                 classes[cls.Name] = (k.Item1, true);
                 cls.Type = k.Item1;
             }
 
             foreach (var k in classes)
                 if (k.Value.Item2 == false)
-                    throw CompilerError.NameErr($"Class `{k.Value.Item1}` not defined", SourcePos.Zero);
+                    throw CompilerError.NameErr($"Type `{k.Value.Item1}` not defined", SourcePos.Zero);
         }
     }
 }
