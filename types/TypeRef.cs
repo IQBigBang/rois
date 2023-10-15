@@ -13,6 +13,7 @@ namespace RoisLang.types
         public bool IsFunc => this is FuncType;
         public bool IsBool => this is BoolType;
         public bool IsStructClass => this is NamedType nt && nt.IsStructClass;
+        public bool IsEnumClass => this is NamedType nt && nt.IsEnumClass;
 
         public static readonly TypeRef UNKNOWN = new TypeUnknown();
         public static readonly TypeRef INT = new IntType();

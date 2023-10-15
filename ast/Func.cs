@@ -31,30 +31,42 @@ namespace RoisLang.ast
         }
     }
 
-    public interface UserTypeDef
+    public abstract class UserTypeDef
     {
-        public string Name { get; }
-        public TypeRef? Type { get; set; }
-        public SourcePos Pos { get; }
+        public readonly string Name;
+        public NamedType? Type;
+        public SourcePos Pos;
+        public Func[] Methods;
+
+        protected UserTypeDef(string name, SourcePos pos, Func[] methods)
+        {
+            Name = name;
+            Pos = pos;
+            Methods = methods;
+        }
     }
 
     public class ClassDef : UserTypeDef
     {
-        public readonly string Name;
-        string UserTypeDef.Name => Name;
         public (TypeRef, string)[] Fields;
-        public NamedType? Type;
-        TypeRef? UserTypeDef.Type { get => Type; set => Type = (NamedType)value!; }
-        public Func[] Methods;
-        public SourcePos Pos;
-        SourcePos UserTypeDef.Pos => Pos;
 
         public ClassDef(string name, (TypeRef, string)[] fields, Func[] methods, SourcePos pos)
+            : base(name, pos, methods)
         {
-            Name = name;
             Fields = fields;
-            Methods = methods;
-            Pos = pos;
+        }
+    }
+
+    public class EnumClassDef : UserTypeDef
+    {
+        public record Variant(string VariantName, (TypeRef, string)[] Fields, SourcePos Pos);
+
+        public Variant[] Variants;
+
+        public EnumClassDef(string name, Variant[] variants, Func[] methods, SourcePos pos)
+            : base(name, pos, methods)
+        {
+            Variants = variants;
         }
     }
 

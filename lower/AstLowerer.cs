@@ -38,8 +38,8 @@ namespace RoisLang.lower
                 var value = MidValue.Global(midFunc, Assertion.X);
                 Symbols.AddNew(func.Name, value);
             }
-            StrType = program.Classes.First(c => c.Name == "Str").Type;
-            foreach (var cls in program.Classes)
+            StrType = program.UserTypes.First(c => c.Name == "Str").Type;
+            foreach (var cls in program.UserTypes)
             {
                 foreach (var method in cls.Methods)
                 {
@@ -51,7 +51,7 @@ namespace RoisLang.lower
             }
             for (int i = 0; i < program.Functions.Length; i++)
                 LowerFunc(program.Functions[i], midFuncs[i]);
-            foreach (var cls in program.Classes)
+            foreach (var cls in program.UserTypes)
             {
                 foreach (var method in cls.Methods)
                 {
@@ -59,7 +59,7 @@ namespace RoisLang.lower
                 } 
             }
             return new MidModule(Methods.Select(x => x.Value.GetGlobalValue()).Concat(midFuncs).ToList(), 
-                program.Classes.Select(x => x.Type!).ToList());
+                program.UserTypes.Select(x => x.Type!).ToList());
         }
 
         private void LowerFunc(Func f, MidFunc target)

@@ -17,8 +17,10 @@ namespace RoisLang.types
         }
 
         public bool IsStructClass => Def is ast.ClassDef;
+        public bool IsEnumClass => Def is ast.EnumClassDef;
 
         public (TypeRef, string)[] Fields => (Def as ast.ClassDef)!.Fields;
+        public ast.EnumClassDef.Variant[] Variants => (Def as ast.EnumClassDef)!.Variants;
 
         public override int GetHashCode() => Name.GetHashCode();
         public override string ToString() => "$" + Name;

@@ -10,12 +10,12 @@ namespace RoisLang.mid_ir
     public class MidModule
     {
         public List<MidFunc> Functions;
-        public List<NamedType> Classes;
+        public List<NamedType> UserTypes;
 
         public MidModule(List<MidFunc> functions, List<NamedType> classes)
         {
             Functions = functions;
-            Classes = classes;
+            UserTypes = classes;
         }
     }
 }

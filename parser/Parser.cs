@@ -280,6 +280,24 @@ namespace RoisLang.parser
                                     Superpower.Parsers.Token.EqualTo(Token.Dedent)
                                     .Value(new ClassDef(className.ToStringValue(), fields, methods, Trace(className))))));
 
+        private static readonly TokenListParser<Token, EnumClassDef.Variant> ParseEnumClassCase =
+            Superpower.Parsers.Token.EqualTo(Token.KwCase).IgnoreThen(Superpower.Parsers.Token.EqualTo(Token.Sym))
+            .Then(caseName => Superpower.Parsers.Token.EqualTo(Token.LParen)
+                              .IgnoreThen(ParseField.ManyDelimitedBy(Superpower.Parsers.Token.EqualTo(Token.Comma)))
+                              .Then(fields => Superpower.Parsers.Token.Sequence(Token.RParen, Token.Nl)
+                                                .Value(new EnumClassDef.Variant(caseName.ToStringValue(), fields, Trace(caseName)))));
+
+        private static readonly TokenListParser<Token, EnumClassDef> ParseEnumClassDef =
+            Superpower.Parsers.Token.Sequence(Token.KwEnum, Token.KwClass)
+            .IgnoreThen(Superpower.Parsers.Token.EqualTo(Token.Sym))
+            .Then(className =>
+                Superpower.Parsers.Token.Sequence(Token.Colon, Token.Nl, Token.Indent)
+                .IgnoreThen(ParseEnumClassCase.Many())
+                .Then(fields => ParseFuncDef.Many()
+                                .Then(methods =>
+                                    Superpower.Parsers.Token.EqualTo(Token.Dedent)
+                                    .Value(new EnumClassDef(className.ToStringValue(), fields, methods, Trace(className))))));
+
         private static readonly TokenListParser<Token, string> ParseInclude =
              Superpower.Parsers.Token.EqualTo(Token.KwInclude)
             .IgnoreThen(Superpower.Parsers.Token.EqualTo(Token.Sym))
@@ -289,7 +307,9 @@ namespace RoisLang.parser
             Superpower.Parsers.Token.EqualTo(Token.Nl).Many()
             .IgnoreThen(ParseInclude.Many())
             .Then(includes =>
-                ParseClassDef.Select(x => (object)x).Or(ParseFuncDef.Or(ParseExternFuncDef).Select(x => (object)x))
+                ParseClassDef.Select(x => (object)x)
+                .Or(ParseEnumClassDef.Select(x => (object)x))
+                .Or(ParseFuncDef.Or(ParseExternFuncDef).Select(x => (object)x))
                 .Then(x => Superpower.Parsers.Token.EqualTo(Token.Nl).Many().Value(x))
                 .Many()
                 .Select(xs => 

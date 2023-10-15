@@ -24,7 +24,7 @@ namespace RoisLang.asm.c
             _out.WriteLine("#include \"std/alloc.h\"");
 
             // Type definitions before function types
-            foreach (var cls in module.Classes)
+            foreach (var cls in module.UserTypes)
                 _out.WriteLine($"typedef struct struct_{cls.Name}* {NameMangle.NameType(cls)};");
             // Function types
             foreach (var ftype in FuncType.AllFuncTypes)
@@ -40,12 +40,29 @@ namespace RoisLang.asm.c
                 _out.WriteLine("void* env;");
                 _out.WriteLine($"}} {PrintTy(ftype)};");
             }
-            foreach (var cls in module.Classes)
+            foreach (var cls in module.UserTypes)
             {
-                _out.WriteLine($"struct struct_{cls.Name} {{");
-                foreach (var field in cls.Fields)
-                    _out.WriteLine($"{PrintTy(field.Item1)} {field.Item2};");
-                _out.WriteLine("};");
+                if (cls.IsStructClass)
+                {
+                    _out.WriteLine($"struct struct_{cls.Name} {{");
+                    foreach (var field in cls.Fields)
+                        _out.WriteLine($"{PrintTy(field.Item1)} {field.Item2};");
+                    _out.WriteLine("};");
+                } else if (cls.IsEnumClass)
+                {
+                    _out.WriteLine($"struct struct_{cls.Name} {{");
+                    _out.WriteLine("I32 tag;");
+                    _out.WriteLine("union {");
+                    foreach (var variant in cls.Variants)
+                    {
+                        _out.WriteLine("struct {");
+                        foreach (var field in variant.Fields)
+                            _out.WriteLine($"{PrintTy(field.Item1)} {field.Item2};");
+                        _out.WriteLine($"}} {variant.VariantName};");
+                    }
+                    _out.WriteLine("} payload;");
+                    _out.WriteLine("};");
+                }
             }
             // Function declarations
             foreach (var func in module.Functions) {

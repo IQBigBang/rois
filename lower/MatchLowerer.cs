@@ -16,7 +16,7 @@ namespace RoisLang.lower
         private void _visitProgram(ast.Program program)
         {
             foreach (var fn in program.Functions) VisitFunc(fn);
-            foreach (var cls in program.Classes)
+            foreach (var cls in program.UserTypes)
                 foreach (var fn in cls.Methods)
                     VisitFunc(fn);
         }

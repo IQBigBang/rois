@@ -77,6 +77,8 @@ namespace RoisLang.parser
         KwAs,
         KwAnd,
         KwOr,
+        KwEnum,
+        KwCase,
     }
 
     public class Lexer
@@ -338,6 +340,10 @@ namespace RoisLang.parser
                 tokens.Add(SimpleToken(Token.KwAnd, 3));
             else if (s == "or")
                 tokens.Add(SimpleToken(Token.KwOr, 2));
+            else if (s == "enum")
+                tokens.Add(SimpleToken(Token.KwEnum, 4));
+            else if (s == "case")
+                tokens.Add(SimpleToken(Token.KwCase, 4));
             else
                 tokens.Add(SimpleToken(Token.Sym, len));
         }

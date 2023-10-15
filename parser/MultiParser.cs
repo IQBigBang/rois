@@ -23,7 +23,7 @@ namespace RoisLang.parser
         {
             var mp = new MultiParser(new TypeBuilder());
             mp.ParseFile(Path.GetFullPath(filePath));
-            mp.typeBuilder.InitializeAll(mp.oneBigProgram.Classes);
+            mp.typeBuilder.InitializeAll(mp.oneBigProgram.UserTypes);
             return mp.oneBigProgram;
         }
 
@@ -59,7 +59,7 @@ namespace RoisLang.parser
 
         void MergeProgram(ast.Program pr)
         {
-            oneBigProgram.Classes = pr.Classes.Concat(oneBigProgram.Classes).ToArray();
+            oneBigProgram.UserTypes = pr.UserTypes.Concat(oneBigProgram.UserTypes).ToArray();
             oneBigProgram.Functions = pr.Functions.Concat(oneBigProgram.Functions).ToArray();
         }
     }
