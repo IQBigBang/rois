@@ -166,13 +166,30 @@ namespace RoisLang.lower
                     }
                 case ConstructorExpr constrExpr:
                     {
-                        var instance = Builder.BuildAllocClass(constrExpr.Class);
-                        foreach (var (fieldName, fieldExpr) in constrExpr.Fields)
+                        if (constrExpr.ClassType!.IsStructClass)
                         {
-                            var fieldValue = LowerExpr(fieldExpr);
-                            Builder.BuildStore(instance, fieldValue, fieldName);
+                            var instance = Builder.BuildAllocClass(constrExpr.ClassType);
+                            foreach (var (fieldName, fieldExpr) in constrExpr.Fields)
+                            {
+                                var fieldValue = LowerExpr(fieldExpr);
+                                Builder.BuildStore(instance, fieldValue, fieldName);
+                            }
+                            return instance;
                         }
-                        return instance;
+                        else if (constrExpr.ClassType!.IsEnumClass)
+                        {
+                            var instance = Builder.BuildAllocClass(constrExpr.ClassType);
+                            int variantTag = Array.FindIndex(constrExpr.ClassType.Variants, x => x.VariantName == constrExpr.ConstrName);
+                            Builder.BuildSetTag(instance, variantTag);
+                            foreach (var (fieldName, fieldExpr) in constrExpr.Fields)
+                            {
+                                var fieldValue = LowerExpr(fieldExpr);
+                                Builder.BuildStore(new FieldInfo(constrExpr.ClassType, variantTag, fieldName),
+                                                   instance, fieldValue);
+                            }
+                            return instance;
+                        }
+                        else throw new Exception();
                     }
                 case MethodCallExpr mCallExpr:
                     {

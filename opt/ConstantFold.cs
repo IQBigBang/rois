@@ -130,6 +130,7 @@ namespace RoisLang.opt
                     case MidAllocClassInstr _:
                     case MidConstStringInstr _:
                     case MidFailInstr _:
+                    case MidSetTagInstr _:
                         break;
                     default:
                         throw new NotImplementedException();

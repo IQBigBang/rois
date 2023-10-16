@@ -215,9 +215,18 @@ namespace RoisLang.asm.c
                 case MidStoreInstr storeInstr:
                     {
                         var classType = storeInstr.FieldInfo.Class;
-                        var fieldName = storeInstr.FieldInfo.FieldName();
-                        var fieldType = storeInstr.Value.GetType();
-                        _out.WriteLine($"(({PrintTy(classType)}){Print(storeInstr.Object)})->{fieldName} = (({PrintTy(fieldType)}){Print(storeInstr.Value)});");
+                        if (classType.IsStructClass)
+                        {
+                            var fieldName = storeInstr.FieldInfo.FieldName();
+                            var fieldType = storeInstr.Value.GetType();
+                            _out.WriteLine($"(({PrintTy(classType)}){Print(storeInstr.Object)})->{fieldName} = (({PrintTy(fieldType)}){Print(storeInstr.Value)});");
+                        } else if (classType.IsEnumClass)
+                        {
+                            var variantName = storeInstr.FieldInfo.VariantName();
+                            var fieldName = storeInstr.FieldInfo.FieldName();
+                            var fieldType = storeInstr.Value.GetType();
+                            _out.WriteLine($"({Print(storeInstr.Object)})->payload.{variantName}.{fieldName} = (({PrintTy(fieldType)}){Print(storeInstr.Value)});");
+                        }
                     }
                     break;
                 case MidAllocClassInstr allocInstr:
@@ -254,6 +263,12 @@ namespace RoisLang.asm.c
                     break;
                 case MidNotInstr notInstr:
                     _out.WriteLine($"{Declare(notInstr.Out)} = !((bool){Print(notInstr.Val)});");
+                    break;
+                case MidSetTagInstr setTagInstr:
+                    _out.WriteLine($"{Print(setTagInstr.Object)}->tag = {setTagInstr.Variant};");
+                    break;
+                case MidGetTagInstr getTagInstr:
+                    _out.WriteLine($"{Declare(getTagInstr.Out)} = {Print(getTagInstr.Object)}->tag;");
                     break;
                 default:
                     throw new NotImplementedException();

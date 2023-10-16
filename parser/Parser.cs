@@ -52,11 +52,11 @@ namespace RoisLang.parser
 
         private static readonly TokenListParser<Token, Expr> Constructor =
             Superpower.Parsers.Token.EqualTo(Token.KwNew)
-            .IgnoreThen(Superpower.Parsers.Token.EqualTo(Token.Sym).Select(name => (instance!.typeBuilder.GetNamedType(name.ToStringValue()), Trace(name))))
-            .Then(x => Superpower.Parsers.Token.EqualTo(Token.LParen)
+            .IgnoreThen(Superpower.Parsers.Token.EqualTo(Token.Sym))
+            .Then(name => Superpower.Parsers.Token.EqualTo(Token.LParen)
                         .IgnoreThen(ConstructorArg.ManyDelimitedBy(Superpower.Parsers.Token.EqualTo(Token.Comma)))
                         .Then(arguments => Superpower.Parsers.Token.EqualTo(Token.RParen)
-                                    .Value((Expr)new ConstructorExpr(x.Item1, new Dictionary<string, Expr>(arguments), x.Item2))));
+                                    .Value((Expr)new ConstructorExpr(name.ToStringValue(), new Dictionary<string, Expr>(arguments), Trace(name)))));
 
         private static readonly TokenListParser<Token, Expr> Atom =
             Superpower.Parsers.Token.EqualTo(Token.Int).Select(s => (Expr)new IntExpr(int.Parse(s.ToStringValue()), Trace(s)))

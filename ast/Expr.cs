@@ -91,8 +91,9 @@ namespace RoisLang.ast
         public override bool IsValidLhs() => false;
     }
 
-    public record ConstructorExpr(NamedType Class, Dictionary<string, Expr> Fields, SourcePos Pos) : Expr(Pos)
+    public record ConstructorExpr(string ConstrName, Dictionary<string, Expr> Fields, SourcePos Pos) : Expr(Pos)
     {
+        public NamedType? ClassType;
         public override bool IsValidLhs() => false;
     }
 

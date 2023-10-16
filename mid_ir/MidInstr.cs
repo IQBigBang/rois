@@ -295,13 +295,24 @@ namespace RoisLang.mid_ir
         }
     }
 
-    public record FieldInfo(NamedType Class, int FieldN)
+    public record FieldInfo(NamedType Class, int FieldN, int VariantN = -1)
     {
+        public FieldInfo(NamedType class_, int variantN, string fieldName)
+            : this(class_, Array.FindIndex(class_.Variants[variantN].Fields, x => x.Item2 == fieldName), variantN) { }
+
         public FieldInfo(NamedType class_, string fieldName)
-            : this(class_, Array.FindIndex(class_.Fields, x => x.Item2 == fieldName)) { }
-        public override string ToString() => $"{Class}.{Class.Fields[FieldN].Item2}";
-        public TypeRef FieldType() => Class.Fields[FieldN].Item1;
-        public string FieldName() => Class.Fields[FieldN].Item2;
+            : this(class_, Array.FindIndex(class_.Fields, x => x.Item2 == fieldName), -1) { }
+
+        public override string ToString() {
+            if (Class.IsStructClass)
+                return $"{Class}.{FieldName()}";
+            else if (Class.IsEnumClass)
+                return $"{Class}.{Class.Variants[VariantN].VariantName}.{FieldName()}";
+            else throw new Exception();
+        }
+        public TypeRef FieldType() => Class.IsStructClass ? Class.Fields[FieldN].Item1 : Class.Variants[VariantN].Fields[FieldN].Item1;
+        public string FieldName() => Class.IsStructClass ? Class.Fields[FieldN].Item2 : Class.Variants[VariantN].Fields[FieldN].Item2;
+        public string VariantName() => Class.Variants[VariantN].VariantName;
     }
 
     public class MidLoadInstr : MidInstr
@@ -365,6 +376,49 @@ namespace RoisLang.mid_ir
         public override void Dump()
         {
             Console.WriteLine($"{Out} = AllocClass {Class}");
+        }
+    }
+
+    public class MidSetTagInstr : MidInstr
+    {
+        public NamedType Class;
+        public int Variant;
+        public MidValue Object;
+
+        public override bool HasOut() => false;
+        public override void SetOut(MidValue val) { }
+        public override MidValue GetOut() => MidValue.Null();
+        public override TypeRef OutType() => TypeRef.VOID;
+        public override IEnumerable<MidValue> AllArgs() { yield return Object; }
+        public override void Map(Func<MidValue, MidValue> map)
+        {
+            Object = map(Object);
+        }
+        public override void Dump()
+        {
+            Console.WriteLine($"SetTag {Class}.{Class.Variants[Variant].VariantName} {Object}");
+        }
+    }
+
+    public class MidGetTagInstr : MidInstr
+    {
+        public NamedType Class;
+        public MidValue Out;
+        public MidValue Object;
+
+        public override bool HasOut() => true;
+        public override void SetOut(MidValue val) { Out = val; }
+        public override MidValue GetOut() => Out;
+        public override TypeRef OutType() => TypeRef.INT;
+        public override IEnumerable<MidValue> AllArgs() { yield return Out; yield return Object; }
+        public override void Map(Func<MidValue, MidValue> map)
+        {
+            Out = map(Out);
+            Object = map(Object);
+        }
+        public override void Dump()
+        {
+            Console.WriteLine($"{Out} = GetTag {Class} {Object}");
         }
     }
 

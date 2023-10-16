@@ -12,8 +12,7 @@ namespace RoisLang.types
     public class TypeChecker
     {
         private ScopedDictionary<string, TypeRef> Symbols;
-        // this is for looking up methods
-        private Dictionary<NamedType, UserTypeDef> ClassesTable;
+        private Dictionary<string, UserTypeDef> Constructors;
         private ast.Program? CurrProgram;
         private UserTypeDef? StrClass;
         private TypeRef? Ret;
@@ -21,7 +20,7 @@ namespace RoisLang.types
         public TypeChecker()
         {
             Symbols = new ScopedDictionary<string, TypeRef>();
-            ClassesTable = new Dictionary<NamedType, UserTypeDef>();
+            Constructors = new Dictionary<string, UserTypeDef>();
             Ret = null;
         }
 
@@ -30,15 +29,27 @@ namespace RoisLang.types
             Symbols.Reset();
             CurrProgram = program;
             StrClass = program.UserTypes.FirstOrDefault(c => c.Name == "Str") ?? throw CompilerError.NameErr("No Str class defined", SourcePos.Zero);
-
+            
             foreach (var func in program.Functions)
             {
                 var ftype = FuncType.New(func.Arguments.Select(x => x.Item2).ToList(), func.Ret);
                 if (Symbols.Contains(func.Name)) throw CompilerError.NameErr($"Double definition of function `{func.Name}`", func.Pos);
                 Symbols.AddNew(func.Name, ftype);
             }
+            // add constructors
             foreach (var cls in program.UserTypes)
-                ClassesTable.Add(cls.Type!, cls);
+            {
+                if (cls is ClassDef cd)
+                {
+                    if (!Constructors.TryAdd(cd.Name, cls))
+                        throw CompilerError.NameErr($"Ambigous constructor {cd.Name}", cd.Pos);
+                } else if (cls is EnumClassDef ecd)
+                {
+                    foreach (var variant in ecd.Variants)
+                        if (!Constructors.TryAdd(variant.VariantName, cls))
+                            throw CompilerError.NameErr($"Ambigous constructor {variant.VariantName}", variant.Pos);
+                }
+            }
             // type-check all functions
             foreach (var func in program.Functions)
                 TypeckFunc(func);
@@ -180,19 +191,19 @@ namespace RoisLang.types
                 case MatchStmt.ObjectPatt objectPatt:
                     {
                         // find the appropriate class
-                        NamedType cls = CurrProgram!.UserTypes.FirstOrDefault(cls => cls.Name == objectPatt.ObjName)?.Type ??
-                                            throw CompilerError.NameErr("Class couldn't be found", objectPatt.Pos);
-                        if (!cls.IsStructClass)
+                        if (!Constructors.TryGetValue(objectPatt.ObjName, out var cls))
+                            throw CompilerError.NameErr($"Undefined constructor `{objectPatt.ObjName}` in pattern", objectPatt.Pos);
+                        if (!cls.Type!.IsStructClass)
                             throw new NotImplementedException();
-                        if (!cls.Equal(expectedType))
+                        if (!cls.Type.Equal(expectedType))
                             throw CompilerError.TypeErr("Pattern doesn't match the scrutinee type", objectPatt.Pos);
-                        if (cls.Fields.Length != objectPatt.Members.Length)
+                        if (cls.Type.Fields.Length != objectPatt.Members.Length)
                             throw CompilerError.TypeErr("Object pattern has more or less members than the type", objectPatt.Pos);
-                        for (int i = 0; i < cls.Fields.Length; i++)
+                        for (int i = 0; i < cls.Type.Fields.Length; i++)
                         {
-                            TypeckPatt(objectPatt.Members[i], cls.Fields[i].Item1);
+                            TypeckPatt(objectPatt.Members[i], cls.Type.Fields[i].Item1);
                         }
-                        objectPatt.ClsType = cls;
+                        objectPatt.ClsType = cls.Type;
                     }
                     return;
                 default:
@@ -297,19 +308,25 @@ namespace RoisLang.types
                     break;
                 case ConstructorExpr constrExpr:
                     {
-                        if (!constrExpr.Class.IsStructClass)
-                            throw new NotImplementedException();
-                        if (constrExpr.Fields.Count != constrExpr.Class.Fields.Length)
+                        if (!Constructors.TryGetValue(constrExpr.ConstrName, out var class_))
+                            throw CompilerError.NameErr($"Undefined constructor `{constrExpr.ConstrName}`", constrExpr.Pos);
+                        (TypeRef, string)[] fields = class_ switch
+                        {
+                            ClassDef cd => cd.Fields,
+                            EnumClassDef ecd => ecd.Variants.First(x => x.VariantName == constrExpr.ConstrName).Fields
+                        };  
+                        if (constrExpr.Fields.Count != fields.Length)
                             throw CompilerError.ValidationErr("All fields must be initialized in a constructor", constrExpr.Pos);
                         for (int i = 0; i < constrExpr.Fields.Count; ++i)
                         {
-                            var (fieldType, fieldName) = constrExpr.Class.Fields[i];
+                            var (fieldType, fieldName) = fields[i];
                             var fieldExpr = constrExpr.Fields.GetValueOrDefault(fieldName) 
                                 ?? throw CompilerError.ValidationErr("All fields must be initialized in a constructor", constrExpr.Pos);
                             if (!TypeckExpr(fieldExpr).Equal(fieldType))
                                 throw CompilerError.TypeErr("Wrong type of field", fieldExpr.Pos);
                         }
-                        constrExpr.Ty = constrExpr.Class;
+                        constrExpr.ClassType = class_.Type!;
+                        constrExpr.Ty = class_.Type!;
                     }
                     break;
                 case MethodCallExpr mCallExpr:
@@ -317,7 +334,7 @@ namespace RoisLang.types
                         var obj = TypeckExpr(mCallExpr.Object);
                         if (!obj.IsStructClass) // TODO: enum class methods
                             throw CompilerError.TypeErr("Non-object types don't have methods", mCallExpr.Object.Pos);  // TODO ?
-                        var classDef = ClassesTable[(NamedType)obj];
+                        var classDef = (ClassDef)((NamedType)obj).Def!;
                         Func? method = null;
                         foreach (var m in classDef.Methods)
                             if (m.Name == mCallExpr.methodName) method = m;

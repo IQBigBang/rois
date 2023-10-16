@@ -165,5 +165,11 @@ namespace RoisLang.mid_ir.builder
             var instr = new mid_ir.MidBitcastInstr { Out = MidValue.Null(), Val = val, TargetType = target };
             return currentBlock!.AddInstr(instr, IncrementPos);
         }
+
+        public void BuildSetTag(MidValue obj, int variant)
+        {
+            var instr = new mid_ir.MidSetTagInstr { Class = (NamedType)obj.GetType(), Object = obj, Variant = variant }; 
+            currentBlock!.AddInstr(instr, IncrementPos);
+        }
     }
 }
