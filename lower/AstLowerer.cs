@@ -337,6 +337,116 @@ namespace RoisLang.lower
                         Builder.SwitchBlock(continueBlock);
                         return;
                     }
+                case MatchStmt matchStmt:
+                    {
+                        // assign scrutinee to a local
+                        var scrExpr = LowerExpr(matchStmt.Scrutinee);
+                        var scrName = "*scr" + Random.Shared.Next(10000).ToString();
+                        Symbols.AddNew(scrName, scrExpr);
+                        // save locals
+                        var allLocals = GetAllLocals();
+                        var localsTypes = allLocals.Select(x => x.Value.GetType()).ToList();
+                        var localsNames = allLocals.Select(x => x.Key).ToList();
+                        var terminationBlock = currentFunc!.NewBlock(localsTypes);
+                        LowerMatchRecursively(scrName, localsTypes, localsNames, terminationBlock.BlockId, matchStmt.Cases);
+                        // go to the termination block
+                        Symbols.ClearCurrentScope();
+                        DoContextSwitch(localsNames, terminationBlock);
+                        Builder.SwitchBlock(terminationBlock);
+                        return;
+                    }
+                default:
+                    throw new NotImplementedException();
+            }
+        }
+
+        private void LowerMatchRecursively(string scrName, List<TypeRef> localsTypes, List<string> localsNames,
+            int terminationBlockId,
+            IEnumerable<(MatchStmt.Patt, Stmt[])> cases)
+        {
+            if (!cases.Any())
+            {
+                // just jump to termination
+                Builder.BuildGoto(terminationBlockId, localsNames.Select(x => Symbols[x]).ToArray());
+                return;
+            }
+            var (patt, body) = cases.First();
+            // compile condition
+            var cond = LowerPattCond(patt, Symbols.Get(scrName));
+            var bodyBlock = currentFunc!.NewBlock(localsTypes);
+            var restBlock = currentFunc!.NewBlock(localsTypes);
+            var localsValues = localsNames.Select(x => Symbols[x]).ToArray();
+            Builder.BuildBranch(cond, bodyBlock, localsValues, restBlock, localsValues);
+            // compile body
+            using (_ = Symbols.EnterNewScope())
+            {
+                DoContextSwitch(localsNames, bodyBlock);
+                Builder.SwitchBlock(bodyBlock);
+
+                LowerPattBindings(patt, Symbols.Get(scrName));
+                foreach (var stmt_ in body)
+                    LowerStmt(stmt_);
+
+                Builder.BuildGoto(terminationBlockId, localsNames.Select(x => Symbols[x]).ToArray());
+            }
+            // compile the `rest`
+            using (_ = Symbols.EnterNewScope())
+            {
+                DoContextSwitch(localsNames, restBlock);
+                Builder.SwitchBlock(restBlock);
+
+                LowerMatchRecursively(scrName, localsTypes, localsNames, terminationBlockId, cases.Skip(1));
+            }
+        }
+
+        private MidValue LowerPattCond(MatchStmt.Patt patt, MidValue scr)
+        {
+            switch (patt)
+            {
+                case MatchStmt.AnyPatt:
+                case MatchStmt.NamePatt:
+                    // no conditions, always succeeds
+                    return MidValue.ConstBool(true);
+                case MatchStmt.IntLitPatt ilp:
+                    return Builder.BuildICmp(scr, MidValue.ConstInt(ilp.Val), MidICmpInstr.CmpOp.Eq);
+                case MatchStmt.ObjectPatt objp:
+                    // itself no condition, but the subpatterns may have
+                    {
+                        var cond = MidValue.ConstBool(true);
+                        for (int i = 0; i < objp.Members.Length; i++)
+                        {
+                            var memberPatt = objp.Members[i];
+                            var member = Builder.BuildLoad(new FieldInfo(objp.ClsType!, i), scr);
+                            cond = Builder.BuildAnd(cond, LowerPattCond(memberPatt, member));
+                        }
+                        return cond;
+                    }
+                default:
+                    throw new NotImplementedException();
+            }
+        }
+
+        private void LowerPattBindings(MatchStmt.Patt patt, MidValue scr)
+        {
+            switch (patt)
+            {
+                case MatchStmt.AnyPatt:
+                case MatchStmt.IntLitPatt:
+                    // no bindings
+                    return;
+                case MatchStmt.NamePatt np:
+                    // binding
+                    Symbols.AddNew(np.Name, scr);
+                    return;
+                case MatchStmt.ObjectPatt objp:
+                    // no binding, subfields may be bound
+                    for (int i = 0; i < objp.Members.Length; i++)
+                    {
+                        var memberPatt = objp.Members[i];
+                        var member = Builder.BuildLoad(new FieldInfo(objp.ClsType!, i), scr);
+                        LowerPattBindings(memberPatt, member);
+                    }
+                    return;
                 default:
                     throw new NotImplementedException();
             }
