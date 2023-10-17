@@ -115,11 +115,12 @@ namespace RoisLang.asm.c
 
         private void compileBlock(MidBlock block)
         {
-            _out.WriteLine($"bb{block.BlockId}: ;");
+            _out.WriteLine($"bb{block.BlockId}: ; {{");
             foreach (var instr in block.Instrs)
             {
                 if (instr != null) compileInstr(instr);
             }
+            _out.WriteLine("}");
         }
 
         private void compileInstr(MidInstr instr)

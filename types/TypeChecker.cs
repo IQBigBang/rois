@@ -331,11 +331,10 @@ namespace RoisLang.types
                 case MethodCallExpr mCallExpr:
                     {
                         var obj = TypeckExpr(mCallExpr.Object);
-                        if (!obj.IsStructClass) // TODO: enum class methods
-                            throw CompilerError.TypeErr("Non-object types don't have methods", mCallExpr.Object.Pos);  // TODO ?
-                        var classDef = (ClassDef)((NamedType)obj).Def!;
+                        if (!obj.IsStructClass && !obj.IsEnumClass)
+                            throw CompilerError.TypeErr("Non-object types don't have methods", mCallExpr.Object.Pos);
                         Func? method = null;
-                        foreach (var m in classDef.Methods)
+                        foreach (var m in ((NamedType)obj).Def!.Methods)
                             if (m.Name == mCallExpr.methodName) method = m;
                         if (method == null) throw CompilerError.NameErr("Undefined method", mCallExpr.Pos);
                         // Now the ordinary Call check
