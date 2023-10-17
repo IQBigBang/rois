@@ -87,6 +87,7 @@ namespace RoisLang.asm.c
                 BoolType => "bool",
                 VoidType => "void", // TODO
                 PtrType => "PTR",
+                AnyRefType => "ANYREF",
                 NamedType nt => $"T_{NamespacedName(nt.Name)}",
                 FuncType ft => MangleTypeAsPartOfName(ft), // the scheme is identical for function types (on purpose)
             };
@@ -104,6 +105,7 @@ namespace RoisLang.asm.c
             if (tr.IsBool) return "B";
             if (tr is PtrType) return "P";
             if (tr is CharType) return "H";
+            if (tr is AnyRefType) return "AR";
             if (tr.IsFunc) {
                 var ftype = (FuncType)tr;
                 string s = "F" + ftype.Args.Count;

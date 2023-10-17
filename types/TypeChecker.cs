@@ -353,12 +353,17 @@ namespace RoisLang.types
                         // castAs provides cheap and safe conversions
                         // int <- bool
                         // char <-> int
+                        // T(class type) <-> AnyRef
                         var valueType = TypeckExpr(castExpr.Value);
                         if (valueType.IsInt && castExpr.CastType is CharType)
                             castExpr.Ty = castExpr.CastType;
                         else if (valueType is CharType && castExpr.CastType is IntType)
                             castExpr.Ty = castExpr.CastType;
                         else if (valueType.IsBool && castExpr.CastType is IntType)
+                            castExpr.Ty = castExpr.CastType;
+                        else if (valueType.IsRefType && castExpr.CastType is AnyRefType)
+                            castExpr.Ty = castExpr.CastType;
+                        else if (valueType is AnyRefType && castExpr.CastType.IsRefType)
                             castExpr.Ty = castExpr.CastType;
                         else
                             throw CompilerError.ValidationErr($"Invalid cast from {valueType} to {castExpr.CastType}", castExpr.Pos);

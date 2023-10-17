@@ -13,6 +13,8 @@
 
 #define null ((void*)0)
 
+typedef void* ANYREF;
+
 extern void* CLOENV;
 
 void __attribute__ ((noinline)) __rtfail(const char* desc);

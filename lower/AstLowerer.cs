@@ -212,9 +212,13 @@ namespace RoisLang.lower
                             // bool -> int   = bitcast
                             // char -> int   = bitcast
                             // int -> char   = bitcast (?)
+                            // ref <-> AnyRef=bitcast
                             case (BoolType, IntType):
                             case (CharType, IntType):
                             case (IntType, CharType):
+                            case (NamedType, AnyRefType):
+                            case (AnyRefType, NamedType):
+                            case (AnyRefType, AnyRefType):
                                 return Builder.BuildBitcast(value, castExpr.CastType);
                             default:
                                 throw new NotImplementedException();

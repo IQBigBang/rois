@@ -15,12 +15,15 @@ namespace RoisLang.types
         public bool IsStructClass => this is NamedType nt && nt.IsStructClass;
         public bool IsEnumClass => this is NamedType nt && nt.IsEnumClass;
 
+        public bool IsRefType => IsStructClass || IsEnumClass || this is AnyRefType;
+
         public static readonly TypeRef UNKNOWN = new TypeUnknown();
         public static readonly TypeRef INT = new IntType();
         public static readonly TypeRef VOID = new VoidType();
         public static readonly TypeRef BOOL = new BoolType();
         public static readonly TypeRef PTR = new PtrType();
         public static readonly TypeRef CHAR = new CharType();
+        public static readonly TypeRef ANYREF = new AnyRefType();
 
         public override bool Equals(object? obj)
         {
@@ -36,6 +39,7 @@ namespace RoisLang.types
             if (IsBool && other.IsBool) return true;
             if (this is PtrType && other is PtrType) return true;
             if (this is CharType && other is CharType) return true;
+            if (this is AnyRefType && other is AnyRefType) return true;
             if (IsFunc && other.IsFunc)
             {
                 var this_ = (FuncType)this;
