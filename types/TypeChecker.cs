@@ -193,15 +193,14 @@ namespace RoisLang.types
                         // find the appropriate class
                         if (!Constructors.TryGetValue(objectPatt.ObjName, out var cls))
                             throw CompilerError.NameErr($"Undefined constructor `{objectPatt.ObjName}` in pattern", objectPatt.Pos);
-                        if (!cls.Type!.IsStructClass)
-                            throw new NotImplementedException();
-                        if (!cls.Type.Equal(expectedType))
+                        if (!cls.Type!.Equal(expectedType))
                             throw CompilerError.TypeErr("Pattern doesn't match the scrutinee type", objectPatt.Pos);
-                        if (cls.Type.Fields.Length != objectPatt.Members.Length)
+                        var fields = cls.Type.IsStructClass ? cls.Type.Fields : cls.Type.Variants.First(x => x.VariantName == objectPatt.ObjName).Fields;
+                        if (fields.Length != objectPatt.Members.Length)
                             throw CompilerError.TypeErr("Object pattern has more or less members than the type", objectPatt.Pos);
-                        for (int i = 0; i < cls.Type.Fields.Length; i++)
+                        for (int i = 0; i < fields.Length; i++)
                         {
-                            TypeckPatt(objectPatt.Members[i], cls.Type.Fields[i].Item1);
+                            TypeckPatt(objectPatt.Members[i], fields[i].Item1);
                         }
                         objectPatt.ClsType = cls.Type;
                     }

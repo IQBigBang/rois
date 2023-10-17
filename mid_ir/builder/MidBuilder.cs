@@ -171,5 +171,11 @@ namespace RoisLang.mid_ir.builder
             var instr = new mid_ir.MidSetTagInstr { Class = (NamedType)obj.GetType(), Object = obj, Variant = variant }; 
             currentBlock!.AddInstr(instr, IncrementPos);
         }
+
+        public MidValue BuildGetTag(MidValue obj)
+        {
+            var instr = new mid_ir.MidGetTagInstr { Out = MidValue.Null(), Class = (NamedType)obj.GetType(), Object = obj };
+            return currentBlock!.AddInstr(instr, IncrementPos);
+        }
     }
 }

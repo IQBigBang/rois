@@ -208,8 +208,16 @@ namespace RoisLang.asm.c
                 case MidLoadInstr loadInstr:
                     {
                         var classType = loadInstr.FieldInfo.Class;
-                        var fieldName = loadInstr.FieldInfo.FieldName();
-                        _out.WriteLine($"{Declare(loadInstr.Out)} = (({PrintTy(classType)}){Print(loadInstr.Object)})->{fieldName};");
+                        if (classType.IsStructClass)
+                        {
+                            var fieldName = loadInstr.FieldInfo.FieldName();
+                            _out.WriteLine($"{Declare(loadInstr.Out)} = (({PrintTy(classType)}){Print(loadInstr.Object)})->{fieldName};");
+                        } else if (classType.IsEnumClass)
+                        {
+                            var variantName = loadInstr.FieldInfo.VariantName();
+                            var fieldName = loadInstr.FieldInfo.FieldName();
+                            _out.WriteLine($"{Declare(loadInstr.Out)} = ({Print(loadInstr.Object)})->payload.{variantName}.{fieldName};");
+                        }
                     }
                     break;
                 case MidStoreInstr storeInstr:

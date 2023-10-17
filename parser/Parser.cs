@@ -193,7 +193,7 @@ namespace RoisLang.parser
         private static readonly TokenListParser<Token, Patt> ParsePatt =
             Superpower.Parsers.Token.EqualToValue(Token.Sym, "_").Select(x => (Patt)new AnyPatt(Trace(x)))
             .Or(Superpower.Parsers.Token.EqualTo(Token.Int).Select(n => (Patt)new IntLitPatt(int.Parse(n.ToStringValue()), Trace(n))))
-            .Or(ParseObjectPatt)
+            .Or(ParseObjectPatt.Try())
             .Or(Superpower.Parsers.Token.EqualTo(Token.Sym).Select(sym => (Patt)new NamePatt(sym.ToStringValue(), Trace(sym))));
 
         private static readonly TokenListParser<Token, (MatchStmt.Patt, Stmt[])> ParseMatchCase =

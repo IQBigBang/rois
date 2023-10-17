@@ -410,17 +410,37 @@ namespace RoisLang.lower
                 case MatchStmt.IntLitPatt ilp:
                     return Builder.BuildICmp(scr, MidValue.ConstInt(ilp.Val), MidICmpInstr.CmpOp.Eq);
                 case MatchStmt.ObjectPatt objp:
-                    // itself no condition, but the subpatterns may have
+                    if (objp.ClsType!.IsStructClass)
                     {
-                        var cond = MidValue.ConstBool(true);
+                        // itself no condition, but the subpatterns may have
+                        {
+                            var cond = MidValue.ConstBool(true);
+                            for (int i = 0; i < objp.Members.Length; i++)
+                            {
+                                var memberPatt = objp.Members[i];
+                                var member = Builder.BuildLoad(new FieldInfo(objp.ClsType!, i), scr);
+                                cond = Builder.BuildAnd(cond, LowerPattCond(memberPatt, member));
+                            }
+                            return cond;
+                        }
+                    }
+                    else if (objp.ClsType!.IsEnumClass)
+                    {
+                        // check the tag
+                        var tag = Builder.BuildGetTag(scr);
+                        var expectedTag = Array.FindIndex(objp.ClsType.Variants, (x) => x.VariantName == objp.ObjName);
+                        if (expectedTag == -1) throw new Exception();
+                        var cond = Builder.BuildICmp(tag, MidValue.ConstInt(expectedTag), MidICmpInstr.CmpOp.Eq);
+                        // subpattern conditions
                         for (int i = 0; i < objp.Members.Length; i++)
                         {
                             var memberPatt = objp.Members[i];
-                            var member = Builder.BuildLoad(new FieldInfo(objp.ClsType!, i), scr);
+                            var member = Builder.BuildLoad(new FieldInfo(objp.ClsType!, i, expectedTag), scr);
                             cond = Builder.BuildAnd(cond, LowerPattCond(memberPatt, member));
                         }
                         return cond;
                     }
+                    else throw new Exception();
                 default:
                     throw new NotImplementedException();
             }
@@ -440,10 +460,12 @@ namespace RoisLang.lower
                     return;
                 case MatchStmt.ObjectPatt objp:
                     // no binding, subfields may be bound
+                    var variantTag = objp.ClsType!.IsStructClass ? -1 :
+                                        Array.FindIndex(objp.ClsType.Variants, (x) => x.VariantName == objp.ObjName);
                     for (int i = 0; i < objp.Members.Length; i++)
                     {
                         var memberPatt = objp.Members[i];
-                        var member = Builder.BuildLoad(new FieldInfo(objp.ClsType!, i), scr);
+                        var member = Builder.BuildLoad(new FieldInfo(objp.ClsType!, i, variantTag), scr);
                         LowerPattBindings(memberPatt, member);
                     }
                     return;
